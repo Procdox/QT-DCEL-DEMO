@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+*.ilk
+*.pdb
+
+./QT-DCEL-DEMO/GeneratedFiles/*
+.vs/

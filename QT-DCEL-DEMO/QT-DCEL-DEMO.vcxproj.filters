@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="DCEL_Demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="renderArea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\Grid.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\Grid_Point.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\Grid_Region.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\Grid_Tools.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\Room_Boundary.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="DCEL">
+      <UniqueIdentifier>{bc9bdc48-918b-4a2b-b8d3-eac39d390dac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="DCEL_Demo.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="renderArea.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="DCEL_Demo.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="DCEL_Demo.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DCEL\DCEL.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\FLL.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\Grid.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\Grid_Point.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\Grid_Region.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\Grid_Tools.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\jc_voronoi.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\Room_Boundary.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
