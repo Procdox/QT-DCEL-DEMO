@@ -2,6 +2,8 @@
 #include "./DCEL/Room_Boundary.h"
 
 #include <QPainter>
+#include <QFutureSynchronizer>
+#include <QtConcurrent>
 
 #include <cstring>
 #include <cstdlib>
@@ -116,6 +118,17 @@ FLL<Pgrd> poissonSample(grd region_radius, int point_count, grd mid_seperation)
 	return point_list;
 }
 
+
+QPolygonF inset(Face<Pgrd> * target) {
+	Room_Boundary focus = Room_Boundary(target);
+	auto border = focus.Inset(.4);
+
+	QPolygonF polygon;
+	for (auto point : border)
+		polygon.append(QPointF(point.X.n * render_scale, point.Y.n * render_scale));
+
+	return polygon;
+}
 void RenderArea::generate(DCEL<Pgrd> * system)
 {
 	Region_List Exteriors;
@@ -191,29 +204,19 @@ void RenderArea::generate(DCEL<Pgrd> * system)
 
 	shapes.clear();
 
+	QFutureSynchronizer<QPolygonF> sync;
 	for (auto cell : central)
-		for (auto boundary : cell->getBounds()) {
-			Room_Boundary focus = Room_Boundary(boundary);
-			auto border = focus.Inset(.4);
-
-			QPolygonF polygon;
-			for (auto point : border)
-				polygon.append(QPointF(point.X.n * render_scale, point.Y.n * render_scale));
-
-			shapes.append(std::move(polygon));
-		}
+		for (auto boundary : cell->getBounds())
+			sync.addFuture(QtConcurrent::run(inset, boundary));
 
 	for (auto cell : peripheral)
-		for (auto boundary : cell->getBounds()) {
-			Room_Boundary focus = Room_Boundary(boundary);
-			auto border = focus.Inset(.4);
+		for (auto boundary : cell->getBounds())
+			sync.addFuture(QtConcurrent::run(inset, boundary));
 
-			QPolygonF polygon;
-			for (auto point : border)
-				polygon.append(QPointF(point.X.n * render_scale, point.Y.n * render_scale));
+	sync.waitForFinished();
 
-			shapes.append(std::move(polygon));
-		}
+	for (auto x : sync.futures())
+		shapes.append(x);
 }
 
 void RenderArea::on_renderButton_clicked()
