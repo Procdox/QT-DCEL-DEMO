@@ -1,524 +1,187 @@
 #pragma once
-#include "FLL.h"
+#include "Grid_Point.h"
+
+#define list_contains(a,b) (std::find(a.begin(),a.end(),b) != a.end())
+#define cyclic_next(a,b) (std::next(a) == b.end() ? b.begin() : std::next(a))
 
 /*
 
 Contains definition for a spacial representation agnostic template of a DCEL structure
-_P is not directly interacted with, therefor any data type you like can be appended
+_P is not directly interacted with, therefor any data type you like can be push_backed
 The structure specifically details how regions who have intersecting boundaries are related.
 
 */
 
-template <class _P> class Point;
-template <class _P> class Edge;
-template <class _P> class Face;
-template <class _P> class Region;
-template <class _P> class DCEL;
+class Point;
+class Edge;
+class Face;
+class Region;
+class DCEL;
 
 // Represents a point in space, the ends of edges, and corners of faces
-template <class _P>
 class Point {
 	//friend Face;
-	friend DCEL<_P>;
-	friend Edge<_P>;
+	friend DCEL;
+	friend Edge;
 
 	// The associated DCEL system
-	DCEL<_P> * universe;
+	DCEL * universe;
 
 	// An edge leaving this, nullptr if no edges reference this point
-	Edge<_P> * root;
+	Edge * root;
 
 	// The position of this point of course!
-	_P position;
+	Pgrd position;
 
 	// This can only be created through DCEL system functions
-	Point(DCEL<_P> * uni){
-		universe = uni;
+	Point(DCEL * uni);
+	Point(Point &&) = delete;
+	Point(Point const &) = delete;
 
-		mark = 0;
-	};
-	Point(Point<_P> &&) = delete;
-	Point(Point<_P> const &) = delete;
-
-	~Point() {
-
-	}
+	~Point();
 public:
 	int mark;
 
-	void setPosition(_P p) {
-		position = p;
-	};
-	_P getPosition() const {
-		return position;
-	};
+	void setPosition(Pgrd p);
+	Pgrd getPosition() const;
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Traversal Methods
 
-	Edge<_P> * getRoot() {
-		return root;
-	}
+	Edge * getRoot();
 
-	Edge<_P> const * getRoot() const {
-		return root;
-	}
+	Edge const * getRoot() const;
 };
 
 enum EdgeModType { face_destroyed, faces_preserved, face_created};
 
-template <class _P>
 class EdgeModResult {
-	friend Edge<_P>;
+	friend Edge;
 	//this can only be created by modifications
-	EdgeModResult(EdgeModType t, Face<_P> * f) {
+	EdgeModResult(EdgeModType t, Face * f) {
 		type = t;
 		relevant = f;
 	}
 public:
 
 	EdgeModType type;
-	Face<_P> * relevant;
+	Face * relevant;
 };
 
 // Represents a one way connection between two points
-template <class _P>
 class Edge {
 	//friend Face;
-	friend DCEL<_P>;
-	friend Face<_P>;
+	friend DCEL;
+	friend Face;
 
 	// The associated DCEL system
-	DCEL<_P> * universe;
+	DCEL * universe;
 
 	// The point this edge originates from
-	Point<_P> * root;
+	Point * root;
 
 	// The next edge on the boundary this edge forms
-	Edge<_P> * next;
+	Edge * next;
 	// The previous edge on the boundary this edge forms
-	Edge<_P> * last;
+	Edge * last;
 	// The inverse edge of this one.
-	Edge<_P> * inv;
+	Edge * inv;
 
 	// The face this edge forms a boundary for
-	Face<_P> * loop;
+	Face * loop;
 
 	//this can only be created through DCEL system functions
-	Edge(DCEL<_P> * uni) {
-		universe = uni;
+	Edge(DCEL * uni);
+	Edge(Edge &&) = delete;
+	Edge(Edge const &) = delete;
 
-		mark = 0;
-	}
-	Edge(Edge<_P> &&) = delete;
-	Edge(Edge<_P> const &) = delete;
-
-	~Edge() {
-
-	}
+	~Edge();
 public:
 	int mark;
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Traversal Methods
 
-	Point<_P> * getStart() {
-		return root;
-	}
-	Point<_P> * getEnd() {
-		return inv->root;
-	}
+	Point * getStart();
+	Point * getEnd();
 
-	Edge<_P> * getNext() {
-		return next;
-	}
-	Edge<_P> * getLast() {
-		return last;
-	}
-	Edge<_P> * getInv() {
-		return inv;
-	}
+	Edge * getNext();
+	Edge * getLast();
+	Edge * getInv();
 
-	Face<_P> * getFace() {
-		return loop;
-	}
+	Face * getFace();
 
 	//get the next edge cw around the root point
-	Edge<_P> * getCW() {
-		return last->inv;
-	}
+	Edge * getCW();
 	//get the next edge ccw around the root point
-	Edge<_P> * getCCW() {
-		return inv->next;
-	}
+	Edge * getCCW();
 
-	Point<_P> const * getStart() const {
-		return root;
-	}
-	Point<_P> const * getEnd() const {
-		return inv->root;
-	}
+	Point const * getStart() const;
+	Point const * getEnd() const;
 
-	Edge<_P> const * getNext() const {
-		return next;
-	}
-	Edge<_P> const * getLast() const {
-		return last;
-	}
-	Edge<_P> const * getInv() const {
-		return inv;
-	}
+	Edge const * getNext() const;
+	Edge const * getLast() const;
+	Edge const * getInv() const;
 
-	Face<_P> const * getFace() const {
-		return loop;
-	}
+	Face const * getFace() const;
 
 	//get the next edge cw around the root
-	Edge<_P> const * getCW() const {
-		return inv->next;
-	}
+	Edge const * getCW() const;
 	//get the next edge ccw around the root
-	Edge<_P> const * getCCW() const {
-		return last->inv;
-	}
+	Edge const * getCCW() const;
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Modification
 
 	//subdivides this point, maintains this edges root
-	void subdivide(_P mid_point) {
-		Edge<_P>* adjoint = universe->createEdge();
-		Point<_P>* mid = universe->createPoint();
-
-		//we need to connect mid - root, position
-
-		//20 variables internal to our 4 edges
-		//4 of these are inverses, can be ignored
-		//5: root, last, inv->next, loop, inv->loop don't change
-		//- adjoint->(next, last, loop, root)
-		//- adoint->inv->(next, last, loop, root)
-		//- next
-		//- inv->(last, root)
-
-		//11 internal changes
-
-		//6 possible external references
-		//root->root doesnt change
-		//last->next doesnt change
-		//inv->next->last doesnt change
-		//- inv->root->root
-		//- last->next
-		//- inv->next->last
-
-		//3 external changes
-
-		mid->position = mid_point;
-		mid->root = adjoint;
-
-		if (next != inv) {
-			inv->root->root = next;
-
-			adjoint->next = next;
-			adjoint->last = this;
-			adjoint->loop = loop;
-			adjoint->root = mid;
-
-			adjoint->inv->next = inv;
-			adjoint->inv->last = inv->last;
-			adjoint->inv->loop = inv->loop;
-			adjoint->inv->root = inv->root;
-
-			next->last = adjoint;
-			inv->last->next = adjoint->inv;
-
-			next = adjoint;
-			inv->last = adjoint->inv;
-			inv->root = mid;
-		}
-		else {
-			inv->root->root = adjoint->inv;
-
-			adjoint->next = adjoint->inv;
-			adjoint->last = this;
-			adjoint->loop = loop;
-			adjoint->root = mid;
-
-			adjoint->inv->next = inv;
-			adjoint->inv->last = adjoint;
-			adjoint->inv->loop = loop;
-			adjoint->inv->root = inv->root;
-
-			next = adjoint;
-			inv->last = adjoint->inv;
-			inv->root = mid;
-		}
-	}
+	void subdivide(Pgrd mid_point);
 
 	//detach from the current root point in favor of a novel point
 	//just moves root if it is isolated
 	//returns the face left at og root if it exists
-	EdgeModResult<_P> moveRoot(_P p) {
-		Point<_P>* og = root;
-		if (last == inv) {
-			//root is isolated
-
-			root->setPosition(p);
-			return EdgeModResult<_P>(EdgeModType::faces_preserved, nullptr);
-		}
-		else {
-			Point<_P>* end = universe->createPoint();
-			Edge<_P>* old = inv->next;
-			end->root = this;
-			end->position = p;
-
-			root->root = old;
-
-			last->next = old;
-			old->last = last;
-
-			last = inv;
-			inv->next = this;
-			root = end;
-
-			//reface this and old
-			if (loop == inv->loop) {
-				//we have disconnected a loop
-				loop->root = this;
-
-				Face<_P>* novel = universe->createFace();
-				novel->root = old;
-				novel->reFace();
-
-				return EdgeModResult<_P>(EdgeModType::face_created, novel);
-			}
-			else {
-				//we have merged two loops
-				universe->removeFace(inv->loop);
-				loop->reFace();
-
-				return EdgeModResult<_P>(EdgeModType::face_destroyed, inv->loop);
-			}
-		}
-	}
+	EdgeModResult moveRoot(Pgrd p);
 
 	//detaches from the current root and inserts to the end of target
 	//deletes og root if thereafter isolated
 	//returns the face left at og root if it exists
-	EdgeModResult<_P> insertAfter(Edge<_P>* target) {
-		//remove from og
-
-		Face<_P>* novel_a = nullptr;
-		Face<_P>* novel_b = nullptr;
-
-		if (last == inv) {
-			universe->removePoint(root);
-		}
-		else {
-			Edge<_P>* old = inv->next;
-
-			root->root = old;
-
-			last->next = old;
-			old->last = last;
-
-			//reface this and old
-			if (loop == inv->loop) {
-				//we have disconnected a loop
-				loop->root = this;
-
-				novel_a = universe->createFace();
-				novel_a->root = old;
-				novel_a->reFace();
-			}
-			else {
-				//we have merged two loops
-				universe->removeFace(inv->loop);
-				loop->reFace();
-			}
-		}
-
-		//insert elsewhere
-		root = target->inv->root;
-
-		inv->next = target->next;
-		target->next->last = inv;
-
-		target->next = this;
-		last = target;
-
-		if (target->loop == loop) {
-			//we have split a loop
-			loop->root = this;
-
-			novel_b = universe->createFace();
-			novel_b->root = inv;
-			novel_b->reFace();
-
-			return EdgeModResult<_P>(EdgeModType::face_created, novel_b);
-		}
-		else {
-			//we have joined two loops
-
-			//is it the loop we just disconnected?
-			if (target->loop == novel_a) {
-				novel_a = nullptr;
-			}
-
-			universe->removeFace(target->loop);
-			loop->reFace();
-
-			return EdgeModResult<_P>(EdgeModType::face_destroyed, target->loop);
-		}
-	}
+	EdgeModResult insertAfter(Edge* target);
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Removal
 
 	//remove this edge, its inverse, and either end points that are thereafter isolated
 	//returns novel face if created
-	EdgeModResult<_P> remove() {
-
-		//if either point is isolated, we dont need to reface
-		bool loose_strand = false;
-		bool isolated = true;
-		Face<_P>* novel = nullptr;
-		EdgeModResult<_P> product(EdgeModType::faces_preserved, nullptr);
-
-		if (next == inv) {
-			loose_strand = true;
-
-			universe->removePoint(inv->root);
-		}
-		else {
-			isolated = false;
-
-			inv->root->root = next;
-			next->last = inv->last;
-			inv->last->next = next;
-			loop->root = next;
-		}
-
-		if (last == inv) {
-			loose_strand = true;
-
-			universe->removePoint(root);
-		}
-		else {
-			isolated = false;
-
-			root->root = inv->next;
-			last->next = inv->next;
-			inv->next->last = last;
-			loop->root = last;
-		}
-
-		//we may be connecting or disconnecting two loops
-		if (!loose_strand) {
-			if (loop == inv->loop) {
-				//we have disconnected a loop
-				loop->root = next;
-				loop->reFace();
-
-				novel = universe->createFace();
-				novel->root = last;
-				novel->reFace();
-
-				product.type = EdgeModType::face_created;
-				product.relevant = novel;
-
-			}
-			else {
-				//we have merged two loops
-				loop->root = next;
-				universe->removeFace(inv->loop);
-				loop->reFace();
-
-				product.type = EdgeModType::face_destroyed;
-				product.relevant = inv->loop;
-			}
-		}
-		else if (isolated) {
-			product.type = EdgeModType::face_destroyed;
-			product.relevant = loop;
-		}
-
-		universe->removeEdge(this);
-		return product;
-	}
+	EdgeModResult remove();
 
 	//contracts this edge, the resulting point position is this edges root position
-	void contract() {
-
-		Edge<_P>* focus = next;
-
-		do {
-			focus->root = root;
-			focus = focus->inv->next;
-		} while (focus != inv);
-
-		root->root = next;
-
-		last->next = next;
-		next->last = last;
-
-		inv->next->last = inv->last;
-		inv->last->next = inv->next;
-
-		if (loop->root == this) {
-			loop->root = next;
-		}
-		if (inv->loop->root == inv) {
-			inv->loop->root = inv->last;
-		}
-
-		universe->removePoint(inv->root);
-		universe->removeEdge(this);
-	}
+	void contract();
 
 };
 
 //represents a loop formed by a series of edges
-template <class _P>
 class Face {
-	friend DCEL<_P>;
-	friend Region<_P>;
-	friend Edge<_P>;
+	friend DCEL;
+	friend Region;
+	friend Edge;
 
-	DCEL<_P> * universe;
+	DCEL * universe;
 
-	Edge<_P> * root;
+	Edge * root;
 
-	Region<_P> * group;
+	Region * group;
 
 	//this can only be created through DCEL system functions
-	Face(DCEL<_P> * uni) {
-		universe = uni;
-		group = nullptr;
+	Face(DCEL * uni);
+	Face(DCEL * uni, Region * grp);
+	Face(Face &&) = delete;
+	Face(Face const &) = delete;
 
-		mark = 0;
-	}
-	Face(DCEL<_P> * uni, Region<_P> * grp) {
-		universe = uni;
-
-		mark = 0;
-	}
-	Face(Face<_P> &&) = delete;
-	Face(Face<_P> const &) = delete;
-
-	~Face() {
-
-	}
+	~Face();
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Modifiers
 	//sets all edges of this loop to reference this
-	void reFace() {
-		Edge<_P> * focus = root;
-		do {
-			focus->loop = this;
-			focus = focus->next;
-		} while (focus != root);
-	}
+	void reFace();
 
 public:
 	int mark;
@@ -526,147 +189,42 @@ public:
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Traversal Methods
 
-	Edge<_P> * getRoot() {
-		return root;
-	}
+	Edge * getRoot();
 
-	Edge<_P> const * getRoot() const {
-		return root;
-	}
+	Edge const * getRoot() const;
 
-	Region<_P> * getGroup() {
-		return group;
-	}
+	Region * getGroup();
 
-	Region<_P> const * getGroup() const {
-		return group;
-	}
+	Region const * getGroup() const;
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Queries
 
 	//get the count of edges in the boundary
-	int getLoopSize() const {
-		Edge<_P> const * focus = root;
-		int count = 0;
-
-		do {
-			count++;
-
-			focus = focus->next;
-		} while (focus != root);
-
-		return count;
-	}
+	int getLoopSize() const;
 
 	//return a list of the points in the loop
-	FLL<_P> getLoopPoints() const {
-		FLL<_P> target;
-		Edge<_P> const * focus = root;
-
-		do {
-			_P p = focus->root->getPosition();
-			target.append(p);
-
-			focus = focus->next;
-		} while (focus != root);
-
-		return target;
-	}
+	std::list<Pgrd> getLoopPoints() const;
 
 	//return a list of the edges in the loop
-	FLL<Edge<_P> *> getLoopEdges() {
-		Edge<_P> * focus = root;
-		FLL<Edge<_P> *> target;
-
-		do {
-			target.append(focus);
-
-			focus = focus->next;
-		} while (focus != root);
-
-		return target;
-	}
+	std::list<Edge *> getLoopEdges();
 
 	//returns a list of the edges in the loop
-	FLL<Edge<_P> const *> getLoopEdges() const {
-		Edge<_P> * focus = root;
-		FLL<Edge<_P> *> target;
-
-		do {
-			target.append(focus);
-
-			focus = focus->next;
-		} while (focus != root);
-
-		return target;
-	}
+	std::list<Edge const *> getLoopEdges() const;
 
 	//write to a list, the edges in the loop
-	void getLoopEdges(FLL<Edge<_P> *> &target) {
-		Edge<_P> * focus = root;
-		do {
-			target.append(focus);
-
-			focus = focus->next;
-		} while (focus != root);
-	}
+	void getLoopEdges(std::list<Edge *> &target);
 
 	//write to a list, the edges in the loop
-	void getLoopEdges(FLL<Edge<_P> const *> &target) const {
-		Edge<_P> * focus = root;
-		do {
-			target.append(focus);
-
-			focus = focus->next;
-		} while (focus != root);
-	}
+	void getLoopEdges(std::list<Edge const *> &target) const;
 
 	//return a list of the faces that share a boundary in the loop
-	FLL<Face<_P> *> getNeighbors() {
-		FLL<Face<_P> *> target;
-		Edge<_P> * focus = root;
-
-		do {
-			Face<_P> * canidate = focus->inv->loop;
-			if (!target.contains(canidate)) {
-				target.append(canidate);
-			}
-			focus = focus->next;
-		} while (focus != root);
-
-		return target;
-	}
+	std::list<Face *> getNeighbors();
 
 	//return a list of the faces that share a boundary in the loop
-	FLL<Face<_P> const *> getNeighbors() const {
-		FLL<Face<_P> const *> target;
-		Edge<_P> const * focus = root;
+	std::list<Face const *> getNeighbors() const;
 
-		do {
-			Face<_P> const * canidate = focus->inv->loop;
-			if (!target.contains(canidate)) {
-				target.append(canidate);
-			}
-			focus = focus->next;
-		} while (focus != root);
-
-		return target;
-	}
-
-	bool neighbors(Face<_P> const * target) const {
-		Edge<_P> const * focus = root;
-
-		do {
-			if (focus->inv->loop == target) {
-				return true;
-			}
-
-			focus = focus->next;
-		} while (focus != root);
-
-		return false;
-	}
+	bool neighbors(Face const * target) const;
 	/*struct interact_point {
 		interaction_state state;
 		int region;
@@ -704,379 +262,112 @@ public:
 
 	int getFirstIntersect(const _P &start, const _P &end, _P &intersect) const;*/
 
+	grd area() const;
+
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//         Regioning
 
 	//takes in a simple region boundary and divides this face into faces interior to, and faces exterior to that boundary
-	//void subAllocateFace(FLL<_P> const &boundary, FLL<Face*> &interiors, FLL<Face*> &exteriors);
+	//void subAllocateFace(std::list<Pgrd> const &boundary, FLL<Face*> &interiors, FLL<Face*> &exteriors);
 
-	FLL<Face<_P> *> mergeWithFace(Face<_P>* target) {
-		FLL<Edge<_P> *> markToRemove;
-		FLL<Face<_P> *> product;
-
-		Edge<_P> * focus = root;
-		do {
-
-			if (focus->inv->loop == target)
-				if(!markToRemove.contains(focus->inv))
-					markToRemove.append(focus);
-
-			focus = focus->next;
-		} while (focus != root);
-
-		product.append(this);
-
-		while (!markToRemove.empty()) {
-			EdgeModResult<_P> result = markToRemove.pop()->remove();
-			if (result.type == EdgeModType::face_created) {
-				product.append(result.relevant);
-			}
-			else if (result.type == EdgeModType::face_destroyed) {
-				product.remove(result.relevant);
-			}
-		}
-		return product;
-	}
+	std::list<Face *> mergeWithFace(Face* target);
 };
 
-template <class _P>
 class Region {
-	friend DCEL<_P>;
+	friend DCEL;
 
-	DCEL<_P> * universe;
+	DCEL * universe;
 
-	Region(DCEL<_P> * uni) {
-		universe = uni;
+	Region(DCEL * uni);
+	~Region();
+	std::list<Face *> Boundaries;
 
-		mark = 0;
-	}
-	~Region() {
-
-	}
-	FLL<Face<_P> *> Boundaries;
-
-	Region(Region<_P> &&) = delete;
-	Region(Region<_P> const &) = delete;
+	Region(Region &&) = delete;
+	Region(Region const &) = delete;
 
 public:
 	int mark;
 
-	FLL<Face<_P> *> const & getBounds() {
-		return Boundaries;
-	}
-	Face<_P> * operator[](int a) {
-		return Boundaries[a];
-	}
+	std::list<Face *> const & getBounds();
+	//Face * operator[](int a);
 
-	int size() const {
-		return Boundaries.size();
-	}
+	int size() const;
+	grd area() const;
 
-	void append(Face<_P> * border) {
-		if (border->group != this) {
-			if (border->group != nullptr) {
-				border->group->remove(border);
-			}
+	void add_border(Face * border);
+	void remove(Face * border);
+	void clear();
+	DCEL * getUni();
 
-			border->group = this;
-			Boundaries.push(border);
-		}
-	}
-	void remove(Face<_P> * border) {
-		if (border->group == this) {
-			border->group = nullptr;
-			Boundaries.remove(border);
-		}
-	}
-	void clear() {
-		for (auto border : Boundaries) {
-			border->group = nullptr;
-		}
-
-		Boundaries.clear();
-	}
-
-	DCEL<_P> * getUni() {
-		return universe;
-	}
-
-	FLL<Region *> getNeighbors() {
-		FLL<Region *> product;
-
-		for (auto border : Boundaries) {
-			auto canidates = border->getNeighbors();
-			for (auto suggest : canidates) {
-				if (!product.contains(suggest->group)) {
-					product.push(suggest->group);
-				}
-			}
-		}
-
-		return product;
-	}
+	std::list<Region *> getNeighbors();
 
 };
 
 
 
-template <class _P>
 class DCEL {
-	FLL<Point<_P> *> points;
-	FLL<Edge<_P> *> edges;
-	FLL<Face<_P> *> faces;
-	FLL<Region<_P> *> regions;
+	std::list<Point *> points;
+	std::list<Edge *> edges;
+	std::list<Face *> faces;
+	std::list<Region *> regions;
 
-	friend Edge<_P>;
+	friend Edge;
 
 	//creates a point
 	//no parameters are initialized
-	Point<_P> * createPoint() {
-		Point<_P> * result = new Point<_P>(this);
-		points.push(result);
-		return result;
-	}
+	Point * createPoint();
 	//creates an edge and its inverse
 	//no parameters are initialized
-	Edge<_P> * createEdge() {
-		Edge<_P> * result = new Edge<_P>(this);
-		Edge<_P> * inverse = new Edge<_P>(this);
-
-		edges.push(result);
-		edges.push(inverse);
-
-		result->inv = inverse;
-		inverse->inv = result;
-
-		return result;
-	}
+	Edge * createEdge();
 	//creates a face
 	//no parameters are initialized
-	Face<_P> * createFace() {
-		Face<_P> * result = new Face<_P>(this);
-		faces.push(result);
-		return result;
-	}
+	Face * createFace();
 
 	//removes a point
 	//does NOT check to see if referenced elsewhere
-	void removePoint(Point<_P> * target) {
-		points.remove(target);
-
-		delete target;
-	}
+	void removePoint(Point * target);
 	//removes an edge and its inverse
 	//does NOT check to see if referenced elsewhere
-	void removeEdge(Edge<_P> * target) {
-		edges.remove(target);
-		edges.remove(target->inv);
-
-		delete target->inv;
-		delete target;
-	}
+	void removeEdge(Edge * target);
 	//removes a face
 	//does NOT check to see if referenced elsewhere
-	void removeFace(Face<_P> * target) {
-		faces.remove(target);
-
-		delete target;
-	}
+	void removeFace(Face * target);
 
 public:
-	~DCEL() {
-		for(auto focus_point : points) {
-			delete focus_point;
-		}
+	~DCEL();
 
-		for (auto focus_edge : edges) {
-			delete focus_edge;
-		}
-
-		for (auto focus_face : faces) {
-			delete focus_face;
-		}
-
-		for (auto focus_region : regions) {
-			delete focus_region;
-		}
-	}
-
-	int pointCount() const {
-		return points.size();
-	}
-	int edgeCount() const {
-		return edges.size();
-	}
-	int faceCount() const {
-		return faces.size();
-	}
-	int regionCount() const {
-		return regions.size();
-	}
+	int pointCount() const;
+	int edgeCount() const;
+	int faceCount() const;
+	int regionCount() const;
 
 	//creates an edge and its inverse connecting two novel points
-	Edge<_P> * addEdge(_P a, _P b) {
-		Edge<_P> * result = createEdge();
-		Point<_P> * A = createPoint();
-		Point<_P> * B = createPoint();
-		Face<_P> * loop = createFace();
-
-		result->next = result->inv;
-		result->last = result->inv;
-		result->inv->next = result;
-		result->inv->last = result;
-
-		result->root = A;
-		A->root = result;
-		A->position = a;
-
-		result->inv->root = B;
-		B->root = result->inv;
-		B->position = b;
-
-		result->loop = loop;
-		result->inv->loop = loop;
-
-		loop->root = result;
-
-		return result;
-	}
+	Edge * addEdge(Pgrd a, Pgrd b);
 	//creates an edge and its inverse connecting after an edge to a novel point
-	Edge<_P> * addEdge(Edge<_P> * a, _P b) {
-		Edge<_P> * result = createEdge();
-		Point<_P> * B = createPoint();
-
-		result->next = result->inv;
-		result->inv->last = result;
-
-		result->root = a->inv->root;
-
-		result->inv->root = B;
-		B->root = result->inv;
-		B->position = b;
-
-		a->next->last = result->inv;
-		result->inv->next = a->next;
-
-		a->next = result;
-		result->last = a;
-
-		result->loop = a->loop;
-		result->inv->loop = a->loop;
-
-		return result;
-	}
+	Edge * addEdge(Edge * a, Pgrd b);
 	//creates an edge and its inverse connecting after an two edges
 	//if this links two faces, b's is removed
 	//if this splits a face, the novel has b as it's root
-	Edge<_P> * addEdge(Edge<_P> * a, Edge<_P> * b) {
-		Edge<_P> * result = createEdge();
-		Face<_P> * novel = nullptr;
+	Edge * addEdge(Edge * a, Edge * b);
 
-		a->next->last = result->inv;
-		result->inv->next = a->next;
+	Region * region();
 
-		a->next = result;
-		result->last = a;
-
-		b->next->last = result;
-		result->next = b->next;
-
-		b->next = result->inv;
-		result->inv->last = b;
-
-		result->root = a->inv->root;
-		result->inv->root = b->inv->root;
-
-		if (a->loop == b->loop) {
-			//we have split a loop
-
-			a->loop->root = a;
-			result->loop = a->loop;
-
-			novel = createFace();
-			novel->root = b;
-			novel->reFace();
-		}
-		else {
-			//we have joined two loops
-			removeFace(b->loop);
-			a->loop->reFace();
-		}
-
-		return result;
-	}
-
-	Region<_P> * region() {
-		Region<_P> * product = new Region<_P>(this);
-		regions.append(product);
-		return product;
-	}
-
-	Region<_P> * region(Face<_P> * face) {
-		Region<_P> * product = new Region<_P>(this);
-		product->append(face);
-		regions.append(product);
-		return product;
-	}
-	Region<_P> * region(FLL<_P> const &boundary) {
-		Region<_P> * product = new Region<_P>(this);
-		product->append(draw(boundary));
-		regions.append(product);
-		return product;
-	}
+	Region * region(Face * face);
+	Region * region(std::list<Pgrd> const &boundary);
 
 	//creates a circular chain of edges forming a loop with the given boundary
 	//returns a pointer to the clock-wise oriented interior of the boundary
-	Face<_P> * draw(FLL<_P> const &boundary) {
-		auto track = boundary.begin();
-
-		_P a = *track;
-		++track;
-		_P b = *track;
-		++track;
-
-		Edge<_P> * start = addEdge(a, b);
-		Edge<_P> * strand = start;
-
-		while (track != boundary.end()) {
-			b = *track;
-			++track;
-
-			strand = addEdge(strand, b);
-		}
-
-		addEdge(strand, start->inv);
-
-		start->loop->root = start;
-
-		return start->loop;
-	}
+	Face * draw(std::list<Pgrd> const &boundary);
 
 	//removes a region
 	//does NOT check to see if referenced elsewhere
-	void removeRegion(Region<_P> * target) {
-		regions.remove(target);
+	void removeRegion(Region * target);
 
-		delete target;
-	}
+	void resetPointMarks();
 
-	void resetPointMarks() {
-		for (auto point : points)
-			point->mark = 0;
-	}
+	void resetEdgeMarks();
 
-	void resetEdgeMarks() {
-		for (auto edge : edges)
-			edge->mark = 0;
-	}
+	void resetFaceMarks();
 
-	void resetFaceMarks() {
-		for (auto face : faces)
-			face->mark = 0;
-	}
-
-	void resetRegionMarks() {
-		for (auto region : regions)
-			region->mark = 0;
-	}
+	void resetRegionMarks();
 };

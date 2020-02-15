@@ -5,14 +5,13 @@
 //==========================================================================================================
 
 
-
 namespace chord_splits
 {
 
 	struct split_canidate
 	{
-		Edge<Pgrd> * A_edge;
-		Edge<Pgrd> * B_edge;
+		Edge * A_edge;
+		Edge * B_edge;
 		Pgrd A;
 		Pgrd B;
 		grd distance;
@@ -75,7 +74,7 @@ namespace chord_splits
 		}
 	};
 
-	grd minDiameter(FLL<Edge<Pgrd> *> const &relevants) {
+	grd minDiameter(std::list<Edge *> const &relevants) {
 		//if no pair is small enough to split, add to ins and return
 		grd diameter = 0;
 		bool found = false;
@@ -113,10 +112,10 @@ namespace chord_splits
 		return diameter;
 	}
 
-	grd minDiameter(Region<Pgrd> * target) {
+	grd minDiameter(Region * target) {
 		//if no pair is small enough to split, add to ins and return
 
-		FLL<Edge<Pgrd> *> relevants;
+		std::list<Edge *> relevants;
 
 		for (auto border : target->getBounds()) {
 			border->getLoopEdges(relevants);
@@ -125,10 +124,10 @@ namespace chord_splits
 		return minDiameter(relevants);
 	}
 
-	void chord_clean(Region<Pgrd> * target, grd const & thresh, Region_List & sections) {
+	void chord_clean(Region * target, grd const & thresh, std::list<Region *> & sections) {
 		//if no pair is small enough to split, add to ins and return
 
-		FLL<Edge<Pgrd> *> relevants;
+		std::list<Edge *> relevants;
 
 		for (auto border : target->getBounds()) {
 			border->getLoopEdges(relevants);
@@ -136,7 +135,7 @@ namespace chord_splits
 
 		if (minDiameter(relevants) < thresh) {
 
-			sections.push(target);
+			sections.push_front(target);
 			return;
 		}
 
@@ -341,45 +340,47 @@ namespace chord_splits
 			}
 		}
 		else {
-			sections.push(target);
+			sections.push_front(target);
 		}
 	}
 }
 
-void sortSmalls(Region_List &source, grd const &width, Region_List &smalls) {
-	Region_List bigs;
+void sortSmalls(std::list<Region *> &source, grd const &width, std::list<Region *> &smalls) {
+	std::list<Region *> bigs;
 
 	for (auto target : source) {
 		grd diameter = chord_splits::minDiameter(target);
 		if (diameter < width)
-			smalls.append(target);
+			smalls.push_back(target);
 		else
-			bigs.append(target);
+			bigs.push_front(target);
 	}
 
 	source.clear();
-	source.absorb(bigs);
+	source.splice(source.end(),bigs);
 }
 
-void mergeGroup(Region_List & nulls) {
+void mergeGroup(std::list<Region *> & nulls) {
 	for (auto focus = nulls.begin(); focus != nulls.end(); ++focus) {
 		merge(*focus, *focus);
 
-		for (auto compare = focus.next(); compare != nulls.end();) {
-			auto v = *compare;
+		for (auto compare = nulls.begin(); compare != nulls.end();){
+			if (compare == focus)
+				++compare;
+			else {
+				auto v = *(compare++);
 
-			++compare;
-
-			if (merge(*focus, v))
-				nulls.remove(v);
+				if (merge(*focus, v))
+					nulls.remove(v);
+			}
 		}
 	}
 }
 
 //cuts the region along any chord less than width, returns simple regions
-Region_List Cut(Region<Pgrd> * target, grd const &width) {
+std::list<Region *> Cut(Region * target, grd const &width) {
 
-	Region_List parts;
+	std::list<Region *> parts;
 
 	chord_splits::chord_clean(target, width, parts);
 
@@ -391,20 +392,20 @@ Region_List Cut(Region<Pgrd> * target, grd const &width) {
 }
 
 //cuts the regions along any chord less than width, returns simple regions
-void Cut(Region_List &targets, grd const &width) {
+void Cut(std::list<Region *> &targets, grd const &width) {
 
-	Region_List parts;
+	std::list<Region *> parts;
 
 	for (auto target : targets) {
 		auto p = Cut(target, width);
-		parts.absorb(p);
+		parts.splice(parts.end(),p);
 	}
 
 	targets.clear();
-	targets.absorb(parts);
+	targets.splice(targets.end(), parts);
 }
 
-void removeSmallSections(Region_List &target, grd const &min_width, Region_List &smalls) {
+void removeSmallSections(std::list<Region *> &target, grd const &min_width, std::list<Region *> &smalls) {
 	mergeGroup(target);
 
 	Cut(target, min_width);
@@ -416,7 +417,7 @@ void removeSmallSections(Region_List &target, grd const &min_width, Region_List 
 	mergeGroup(smalls);
 }
 
-void sizeRestrict(Region_List &target, grd const &min_width, Region_List &outs) {
+void sizeRestrict(std::list<Region *> &target, grd const &min_width, std::list<Region *> &outs) {
 	Cut(target, min_width);
 
 	sortSmalls(target, min_width, outs);
@@ -427,9 +428,9 @@ void sizeRestrict(Region_List &target, grd const &min_width, Region_List &outs) 
 	mergeGroup(outs);
 }
 
-Region_List allocateBoundaryFrom(FLL<Pgrd> const &boundary, Region_List &set) {
-	Region_List _ins;
-	Region_List _outs;
+std::list<Region *> allocateBoundaryFrom(std::list<Pgrd> const &boundary, std::list<Region *> &set) {
+	std::list<Region *> _ins;
+	std::list<Region *> _outs;
 
 	for (auto member : set) {
 		subAllocate(member, boundary, _outs, _ins);
@@ -441,13 +442,13 @@ Region_List allocateBoundaryFrom(FLL<Pgrd> const &boundary, Region_List &set) {
 
 	set.clear();
 
-	set.absorb(_outs);
+	set.splice(set.end(),_outs);
 
 	return _ins;
 }
  
-void allocateBoundaryFromInto(FLL<Pgrd> const &boundary, Region_List &set, Region_List &result) {
-	Region_List _outs;
+void allocateBoundaryFromInto(std::list<Pgrd> const &boundary, std::list<Region *> &set, std::list<Region *> &result) {
+	std::list<Region *> _outs;
 
 	for (auto member : set) {
 		subAllocate(member, boundary, _outs, result);
@@ -459,12 +460,12 @@ void allocateBoundaryFromInto(FLL<Pgrd> const &boundary, Region_List &set, Regio
 
 	set.clear();
 
-	set.absorb(_outs);
+	set.splice(set.end(),_outs);
 }
 
-Region_List allocateCleanedBoundaryFrom(FLL<Pgrd> const &boundary, grd const &min_width, Region_List &set) {
-	Region_List _ins;
-	Region_List _outs;
+std::list<Region *> allocateCleanedBoundaryFrom(std::list<Pgrd> const &boundary, grd const &min_width, std::list<Region *> &set) {
+	std::list<Region *> _ins;
+	std::list<Region *> _outs;
 
 	for (auto member : set) {
 		subAllocate(member, boundary, _outs, _ins);
@@ -476,13 +477,13 @@ Region_List allocateCleanedBoundaryFrom(FLL<Pgrd> const &boundary, grd const &mi
 
 	set.clear();
 
-	set.absorb(_outs);
+	set.splice(set.end(),_outs);
 
 	return _ins;
 }
 
-void allocateCleanedBoundaryFromInto(FLL<Pgrd> const &boundary, grd const &min_width, Region_List &set, Region_List &result) {
-	Region_List _outs;
+void allocateCleanedBoundaryFromInto(std::list<Pgrd> const &boundary, grd const &min_width, std::list<Region *> &set, std::list<Region *> &result) {
+	std::list<Region *> _outs;
 
 	for (auto member : set) {
 		subAllocate(member, boundary, _outs, result);
@@ -494,5 +495,5 @@ void allocateCleanedBoundaryFromInto(FLL<Pgrd> const &boundary, grd const &min_w
 
 	set.clear();
 
-	set.absorb(_outs);
+	set.splice(set.end(),_outs);
 }

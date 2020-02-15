@@ -201,3 +201,7 @@ grd grd::sqrt() const
 {
 	return grd(_CMATH_::sqrt(n));
 }
+
+grd grd::abs(const grd &target) {
+	return target.n < 0.0 ? -target : target;
+}

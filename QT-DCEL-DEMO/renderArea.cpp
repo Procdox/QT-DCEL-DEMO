@@ -1,30 +1,33 @@
 #include "renderarea.h"
-#include "./DCEL/Room_Boundary.h"
+
 
 #include <QPainter>
-#include <QFutureSynchronizer>
-#include <QtConcurrent>
+#include <QComboBox>
 
-#include <cstring>
-#include <cstdlib>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-#undef _USE_MATH_DEFINES
+std::list<Pgrd> inset(Face * target) {
+	Room_Boundary focus = Room_Boundary(target);
+	auto border = focus.Inset(.4);
 
-#define JC_VORONOI_IMPLEMENTATION
-#define JCV_REAL_TYPE double
-#define JCV_ATAN2 atan2
-#define JCV_FLT_MAX 1.7976931348623157E+308
-#include "./DCEL/jc_voronoi.h"
+	std::list<Pgrd> polygon;
+	for (auto point : border)
+		polygon.push_back(point);
 
-#define render_scale 3
+	return polygon;
+}
+
+//--------------------------------------------------------------------------------
 
 RenderArea::RenderArea(QWidget *parent)
 	: QWidget(parent)
 {
 	setBackgroundRole(QPalette::Base);
 	setAutoFillBackground(true);
+
+	view_center = QPointF(0.0, 0.0);
+	view_zoom = 1.0;
 }
 
 QSize RenderArea::minimumSizeHint() const
@@ -39,191 +42,112 @@ QSize RenderArea::sizeHint() const
 
 void RenderArea::paintEvent(QPaintEvent * /* event */)
 {
-	static const QPoint points[4] = {
-		QPoint(10, 80),
-		QPoint(20, 10),
-		QPoint(80, 30),
-		QPoint(90, 70)
-	};
-
-	QRect rect(10, 20, 80, 60);
-
-	QPainterPath path;
-	path.moveTo(20, 80);
-	path.lineTo(20, 30);
-	path.cubicTo(80, 0, 50, 50, 80, 80);
-
-	int startAngle = 20 * 16;
-	int arcLength = 120 * 16;
 
 	QPainter painter(this);
 	painter.setPen(Qt::SolidLine);
-	painter.setBrush(Qt::LinearGradientPattern);
 	painter.setRenderHint(QPainter::Antialiasing, true);
 
-	painter.save();
-	painter.translate(width() / 2, height() / 2);
+	QMatrix offset(1, 0, 0, 1, view_center.x(), view_center.y());
+	QMatrix frustrum(view_zoom, 0, 0, view_zoom, 0, 0);
+	QMatrix center(1, 0, 0, 1, width() / 2, height() / 2);
 
-	for (auto polygon : shapes)
-		painter.drawPolygon(polygon);
+	QBrush brush;
+	
+	
+	brush.setStyle(Qt::SolidPattern);
 
-	painter.restore();
+	for (auto group : Groupings) {
+		brush.setColor(group.second);
 
-	painter.setRenderHint(QPainter::Antialiasing, false);
-	painter.setPen(palette().dark().color());
-	painter.setBrush(Qt::NoBrush);
-	painter.drawRect(QRect(0, 0, width() - 1, height() - 1));
-}
+		for (auto polygon : group.first) {
+			QPainterPath positive;
+			for (auto bound : polygon) {
+				positive.addPolygon(((bound * offset) * frustrum) * center);
 
-
-float Random(float a, float b) {
-	float random = ((float)rand()) / (float)RAND_MAX;
-	float diff = b - a;
-	float r = random * diff;
-	return a + r;
-}
-
-Pgrd circularUniformPoint(grd radius = 1) {
-	float t = 2 * M_PI * Random(0.f, 1.f);
-	float u = Random(0.f, 1.f) + Random(0.f, 1.f);
-	float r = u;
-	if (u > 1)
-		r = 2 - u;
-	return Pgrd(r*cos(t), r*sin(t)) * radius;
-
-}
-
-FLL<Pgrd> poissonSample(grd region_radius, int point_count, grd mid_seperation)
-{
-	//generate points
-	FLL<Pgrd> point_list;
-
-	int safety = 10 * point_count;
-	while (point_list.size() < point_count && --safety > 0)
-	{
-		Pgrd suggestion = circularUniformPoint(region_radius);
-
-		bool safe = true;
-		for (auto point : point_list)
-		{
-			if ((point - suggestion).Size() < 10) {
-				safe = false;
-				break;
 			}
+			painter.drawPath(positive);
+			painter.fillPath(positive, brush);
+			//painter.drawPath(path);
 		}
-		if (safe)
-			point_list.append(suggestion);
 	}
 
-	return point_list;
+	for (auto set : Segments) {
+		brush.setColor(set.second);
+
+		for (auto line : set.first) {
+			QPolygonF temp;
+			auto A = ((QPointF(line.first.X.n, line.first.Y.n) * offset) * frustrum) * center;
+			auto B = ((QPointF(line.second.X.n, line.second.Y.n) * offset) * frustrum) * center;
+
+			temp.append(A);
+			temp.append(B);
+
+			QPainterPath positive;
+			positive.addPolygon(temp);
+			painter.drawPath(positive);
+		}
+	}
 }
 
+void RenderArea::addGrouping(const std::list<Region *>& input, const QColor color) {
+	Group result;
+	result.second = color;
 
-QPolygonF inset(Face<Pgrd> * target) {
-	Room_Boundary focus = Room_Boundary(target);
-	auto border = focus.Inset(.4);
+	for (auto region : input) {
+		Shape temp;
 
-	QPolygonF polygon;
-	for (auto point : border)
-		polygon.append(QPointF(point.X.n * render_scale, point.Y.n * render_scale));
+		for (auto face : region->getBounds()) {
+			QPolygonF poly;
+			//for (auto point : inset(face))
+			for (auto point : face->getLoopPoints())
+				poly.append(QPointF(point.X.n, point.Y.n));
 
-	return polygon;
-}
-void RenderArea::generate(DCEL<Pgrd> * system)
-{
-	Region_List Exteriors;
-	Region_List cells;
-	Exteriors.append(system->region());
-
-	const grd region(70);
-	const int max_point_count = 100;
-	const grd span(10);
-
-	jcv_rect bounding_box = { { -region.n, -region.n }, { region.n, region.n } };
-
-	jcv_point points[max_point_count];
-	jcv_diagram diagram;
-
-	memset(&diagram, 0, sizeof(jcv_diagram));
-
-	auto point_list = poissonSample(region, max_point_count, span);
-
-	int i = 0;
-	for (auto point : point_list)
-	{
-		points[i].x = point.X.n;
-		points[i].y = point.Y.n;
-		++i;
+			temp.push_back(std::move(poly));
+		}
+		result.first.push_back(std::move(temp));
 	}
 
-	jcv_diagram_generate(point_list.size(), (const jcv_point *)points, &bounding_box, &diagram);
+	Groupings.push_back(std::move(result));
 
-	point_list.clear();
-
-	const jcv_site* sites = jcv_diagram_get_sites(&diagram);
-
-	for (int i = 0; i < diagram.numsites; ++i) {
-		FLL<Pgrd> cell_boundary;
-
-		const jcv_site* site = &sites[i];
-
-		const jcv_graphedge* e = site->edges;
-
-		while (e)
-		{
-			cell_boundary.push(Pgrd(e->pos[0].x, e->pos[0].y));
-			e = e->next;
-		}
-
-		Region_List novel_cells;
-		allocateBoundaryFromInto(cell_boundary, Exteriors, novel_cells);
-		cells.absorb(novel_cells);
-		point_list.append(Pgrd(site->p.x, site->p.y));
-	}
-
-
-	Region_List central;
-	Region_List peripheral;
-
-	auto p = point_list.begin();
-	for (auto cell : cells)
-	{
-		auto size = (*p).Size();
-		if (size < 30)
-		{
-			central.append(cell);
-		}
-		else if (size < 50)
-		{
-			peripheral.append(cell);
-		}
-		++p;
-	}
-
-	mergeGroup(peripheral);
-
-	shapes.clear();
-
-	QFutureSynchronizer<QPolygonF> sync;
-	for (auto cell : central)
-		for (auto boundary : cell->getBounds())
-			sync.addFuture(QtConcurrent::run(inset, boundary));
-
-	for (auto cell : peripheral)
-		for (auto boundary : cell->getBounds())
-			sync.addFuture(QtConcurrent::run(inset, boundary));
-
-	sync.waitForFinished();
-
-	for (auto x : sync.futures())
-		shapes.append(x);
+	update();
 }
 
-void RenderArea::on_renderButton_clicked()
-{
-	DCEL<Pgrd> * system = new DCEL<Pgrd>();
+void RenderArea::addBuffer(const Buffer& input, const QColor color) {
+	Group result;
+	result.second = color;
 
-	generate(system);
+	Segments.push_back(std::make_pair(input, color));
+
+	update();
+}
+
+void RenderArea::resetDraw() {
+	Groupings.clear();
+	Segments.clear();
+
+	update();
+}
+
+void RenderArea::resetView() {
+	view_center = QPointF(0.0, 0.0);
+	view_zoom = 1.0;
+
+	update();
+}
+
+void RenderArea::mouseMoveEvent(QMouseEvent * e) {
+	const QPointF delta = e->pos() - last_mouse_pos;
+	last_mouse_pos = e->pos();
+
+	view_center += delta / view_zoom;
+
+	update();
+}
+void RenderArea::mousePressEvent(QMouseEvent * e) {
+	last_mouse_pos = e->pos();
+}
+void RenderArea::wheelEvent(QWheelEvent * e) {
+	view_zoom *= e->angleDelta().y() > 0 ? 1.1 : 0.9;
 
 	update();
 }

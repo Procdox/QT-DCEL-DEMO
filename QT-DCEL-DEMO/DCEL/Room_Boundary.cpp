@@ -1,6 +1,6 @@
 #include "Room_Boundary.h"
 
-Room_Boundary::Room_Boundary(Face<Pgrd> * reference)
+Room_Boundary::Room_Boundary(Face * reference)
 {
 	for (auto edge : reference->getLoopEdges()) {
 		Pgrd const previous = edge->getLast()->getStart()->getPosition();
@@ -28,14 +28,14 @@ Room_Boundary::Room_Boundary(Face<Pgrd> * reference)
 
 		inset;
 
-		Points.append(A);
-		Offsets.append(inset);
+		Points.push_back(A);
+		Offsets.push_back(inset);
 		walled = true;
 	}
 }
 
 //only detects local intersections
-FLL<Pgrd> Room_Boundary::Inset(grd const distance) const
+std::list<Pgrd> Room_Boundary::Inset(grd const distance) const
 {
 	//account for local intersections
 
@@ -46,25 +46,25 @@ FLL<Pgrd> Room_Boundary::Inset(grd const distance) const
 		//replace the intersecting inset with the novel
 		//rescan for intersections
 
-	FLL<Pgrd> roots(Points);
-	FLL<Pgrd> insets;
-	FLL<Pgrd>::FLL_iterator_c point = roots.begin();
+	std::list<Pgrd> roots(Points);
+	std::list<Pgrd> insets;
+	auto point = roots.begin();
 	for (auto source : Offsets) {
-		insets.append(source * distance + *point);
+		insets.push_back(source * distance + *point);
 		++point;
 	}
 
-	FLL<Pgrd>::FLL_iterator A_roots = roots.begin_unsafe();
-	FLL<Pgrd>::FLL_iterator A_insets = insets.begin_unsafe();
+	auto A_roots = roots.begin();
+	auto A_insets = insets.begin();
 
 	do {
-		auto B_roots = A_roots.cyclic_next();
-		auto C_roots = B_roots.cyclic_next();
-		auto D_roots = C_roots.cyclic_next();
+		auto B_roots = cyclic_next(A_roots, roots);
+		auto C_roots = cyclic_next(B_roots, roots);
+		auto D_roots = cyclic_next(C_roots, roots);
 
-		auto B_insets = A_insets.cyclic_next();
-		auto C_insets = B_insets.cyclic_next();
-		auto D_insets = C_insets.cyclic_next();
+		auto B_insets = cyclic_next(A_insets, insets);
+		auto C_insets = cyclic_next(B_insets, insets);
+		auto D_insets = cyclic_next(C_insets, insets);
 
 		Pgrd Br = *B_roots;
 		Pgrd Bi = *B_insets;
@@ -101,21 +101,21 @@ FLL<Pgrd> Room_Boundary::Inset(grd const distance) const
 			Pgrd root = I - (dir * r * distance);
 			Pgrd inset = I + (dir * (grd(1) - r) * distance);
 
-			A_roots.remove_next();
-			A_roots.remove_next();
+			roots.erase(cyclic_next(A_roots, roots));
+			roots.erase(cyclic_next(A_roots, roots));
 
-			A_roots.insert_after(root);
+			roots.insert(cyclic_next(A_roots, roots), root);
 
-			A_insets.remove_next();
-			A_insets.remove_next();
+			insets.erase(cyclic_next(A_insets, insets));
+			insets.erase(cyclic_next(A_insets, insets));
 
-			A_insets.insert_after(inset);
+			insets.insert(cyclic_next(A_insets, insets), inset);
 		}
 		else {
 			++A_roots;
 			++A_insets;
 		}
-	} while (A_roots != roots.end_unsafe() && roots.size() > 3);
+	} while (A_roots != roots.end() && roots.size() > 3);
 
 	return insets;
 }

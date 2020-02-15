@@ -1,5 +1,4 @@
 #pragma once
-#include "Grid_Point.h"
 #include "DCEL.h"
 
 /*
@@ -23,7 +22,7 @@ struct interact {
 	FaceRelationType mid_type;
 	Pgrd mid_location;
 
-	Edge<Pgrd> * mark;
+	Edge * mark;
 
 	interact() {
 		mark = nullptr;
@@ -34,40 +33,40 @@ struct interact {
 //returned by getPointRelation
 struct FaceRelation {
 	//this can only be created by queris / copying 
-	FaceRelation(FaceRelationType t, Edge<Pgrd> * e) {
+	FaceRelation(FaceRelationType t, Edge * e) {
 		type = t;
 		relevant = e;
 	}
 	FaceRelationType type;
 	//if type is point_on_boundary, this is the edge that contains the point
 	//root inclusive, end exclusive
-	Edge<Pgrd> * relevant;
+	Edge * relevant;
 };
 
-FaceRelation const getPointRelation(Face<Pgrd> &rel, Pgrd const &test_point);
+FaceRelation const getPointRelation(Face &rel, Pgrd const &test_point);
 
-FaceRelationType const getPointRelation(FLL<Pgrd> const & rel, Pgrd const &test_point);
+FaceRelationType const getPointRelation(std::list<Pgrd> const & rel, Pgrd const &test_point);
 
-bool merge(Region<Pgrd> * a, Region<Pgrd> * b);
+bool merge(Region * a, Region * b);
 
 bool angledBetween(Pgrd const &A, Pgrd const &B, Pgrd const &test);
 
-void determineInteriors(Region<Pgrd> *, FLL<interact *> &, FLL<Face<Pgrd> *> &,
-	FLL<Face<Pgrd> *> &);
+void determineInteriors(Region *, std::list<interact *> &, std::list<Face *> &,
+	std::list<Face *> &);
 
-bool markRegion(Region<Pgrd> *, FLL<Pgrd> const &, FLL<interact *> &);
+bool markRegion(Region *, std::list<Pgrd> const &, std::list<interact *> &);
 
 //type dependent
-void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
-	FLL<Region<Pgrd> *> &exteriors, FLL<Region<Pgrd> *> & interiors);
+void subAllocate(Region * target, std::list<Pgrd> const & boundary,
+	std::list<Region *> &exteriors, std::list<Region *> & interiors);
 
-FaceRelation contains(Region<Pgrd> * target, Pgrd const & test_point);
+FaceRelation contains(Region * target, Pgrd const & test_point);
 
-FLL<Region<Pgrd> *> getNeighbors(Region<Pgrd> * target);
+std::list<Region *> getNeighbors(Region * target);
 
-void cleanRegion(Region<Pgrd> * target);
+void cleanRegion(Region * target);
 
 //adds an edge between two edges within this region
 	//fails if edges do not belong to this region
 	//returns novel region if this splits the region
-Region<Pgrd> * RegionAdd(Region<Pgrd> * target, Edge<Pgrd> * A, Edge<Pgrd> * B);
+Region * RegionAdd(Region * target, Edge * A, Edge * B);

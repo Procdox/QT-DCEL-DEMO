@@ -58,6 +58,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,33 +114,65 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DCEL\DCEL.cpp" />
+    <ClCompile Include="DCEL\debugger.cpp" />
     <ClCompile Include="DCEL\Grid.cpp" />
     <ClCompile Include="DCEL\Grid_Point.cpp" />
     <ClCompile Include="DCEL\Grid_Region.cpp" />
     <ClCompile Include="DCEL\Grid_Tools.cpp" />
     <ClCompile Include="DCEL\Room_Boundary.cpp" />
-    <ClCompile Include="DCEL_Demo.cpp" />
+    <ClCompile Include="DCEL\SimplexNoise.cpp" />
+    <QtMoc Include="DCEL_Demo.cpp">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+    </QtMoc>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderArea.cpp" />
+    <QtMoc Include="TRACER_Demo.cpp">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+    </QtMoc>
+    <ClCompile Include="TRACE\field_model.cpp" />
+    <ClCompile Include="TRACE\tracer.cpp" />
+    <ClCompile Include="Voronoi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="DCEL_Demo.h" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="DCEL_Demo.ui" />
+    <QtUic Include="TRACER_Demo.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="DCEL_Demo.qrc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DCEL\DCEL.h" />
-    <ClInclude Include="DCEL\FLL.h" />
+    <ClInclude Include="DCEL\debugger.h" />
     <ClInclude Include="DCEL\Grid.h" />
     <ClInclude Include="DCEL\Grid_Point.h" />
     <ClInclude Include="DCEL\Grid_Region.h" />
     <ClInclude Include="DCEL\Grid_Tools.h" />
     <ClInclude Include="DCEL\jc_voronoi.h" />
     <ClInclude Include="DCEL\Room_Boundary.h" />
+    <ClInclude Include="DCEL\SimplexNoise.h" />
+    <QtMoc Include="TRACER_Demo.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtConcurrent</IncludePath>
+    </QtMoc>
+    <ClInclude Include="TRACE\field_model.h" />
+    <ClInclude Include="TRACE\grid_finder.h" />
+    <ClInclude Include="TRACE\kd_tree.h" />
+    <ClInclude Include="TRACE\tracer.h" />
+    <ClInclude Include="Voronoi.h" />
     <QtMoc Include="renderArea.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>

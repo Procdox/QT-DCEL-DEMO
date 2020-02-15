@@ -1,6 +1,6 @@
 #pragma once
 #include "Grid.h"
-#include "FLL.h"
+#include <list>
 
 /*
 
@@ -64,7 +64,7 @@ struct Pgrd {
 
 	static bool getIntersect(const Pgrd &A_S, const Pgrd &A_E, const Pgrd &B_S, const Pgrd &B_E, Pgrd &Result);
 
-	static grd area(FLL<Pgrd> const &boundary);
+	static grd area(std::list<Pgrd> const &boundary);
 };
 
 struct PBox {

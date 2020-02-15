@@ -192,10 +192,10 @@ bool Pgrd::getIntersect(const Pgrd &A_S, const Pgrd &A_E, const Pgrd &B_S, const
 	return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
 }
 
-grd Pgrd::area(FLL<Pgrd> const & boundary) {
+grd Pgrd::area(std::list<Pgrd> const & boundary) {
 	grd total = 0;
 
-	Pgrd A = boundary.last();
+	Pgrd A = boundary.back();
 
 	for (auto B : boundary) {
 

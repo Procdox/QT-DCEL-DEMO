@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>407</height>
+    <width>1070</width>
+    <height>888</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,22 +19,255 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>581</width>
-      <height>311</height>
+      <width>1051</width>
+      <height>761</height>
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="renderButton">
+   <widget class="QComboBox" name="pointTypeBox">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>330</y>
-      <width>75</width>
-      <height>23</height>
+      <x>330</x>
+      <y>780</y>
+      <width>151</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>Poisson</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Biased Poisson</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Grid</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Random Offset Grid</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Simplex Offset Grid</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Complex Grid</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Road Override</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QSpinBox" name="throttle">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>780</y>
+      <width>71</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="seed">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>779</y>
+      <width>81</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>780</y>
+      <width>51</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Generate</string>
+     <string>Seed:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>780</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Throttle:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>780</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Point:</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="boundTypeBox">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>779</y>
+      <width>71</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>Radius</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Box</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Fill</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>780</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Bound:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="pointSpacing">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>812</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>15.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>810</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Spacing:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="pointCount">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>810</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>300</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>810</y>
+      <width>61</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Block Limit:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="centerRadius">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>810</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>30.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>810</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Radius:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>809</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Radius:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="globalRadius">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>810</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>70.0</string>
     </property>
    </widget>
   </widget>
@@ -43,7 +276,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>600</width>
+     <width>1070</width>
      <height>21</height>
     </rect>
    </property>
@@ -73,22 +306,8 @@
  <resources>
   <include location="DCEL_Demo.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>renderButton</sender>
-   <signal>clicked()</signal>
-   <receiver>renderWidget</receiver>
-   <slot>on_renderButton_clicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>309</x>
-     <y>371</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>308</x>
-     <y>285</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
+ <slots>
+  <slot>on_renderButton_clicked()</slot>
+ </slots>
 </ui>

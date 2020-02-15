@@ -1,22 +1,24 @@
 #include "Grid_Region.h"
 #include <cmath>
+#include <queue>
+#include "debugger.h"
 
 //#define debug_suballocate
 //#define debug_merge
 //#define debug_clean
 
 #if defined(debug_suballocate) || defined(debug_merge) || defined(debug_clean)
-#define using_unreal
+//#define using_unreal
 #endif
 
 #ifdef using_unreal
-#include "CoreMinimal.h"
+//#include "CoreMinimal.h"
 #endif
 
+//returns FaceRelationType between a face and a point
+FaceRelation const getPointRelation(Face & rel, Pgrd const &test_point) {
 
-FaceRelation const getPointRelation(Face<Pgrd> & rel, Pgrd const &test_point) {
-
-	Edge<Pgrd> * focus = rel.getRoot();
+	Edge * focus = rel.getRoot();
 
 	bool inside = Pgrd::area(rel.getLoopPoints()) < 0;
 
@@ -76,13 +78,15 @@ FaceRelation const getPointRelation(Face<Pgrd> & rel, Pgrd const &test_point) {
 	}
 }
 
-FaceRelationType const getPointRelation(FLL<Pgrd> const & rel, Pgrd const &test_point) {
+//returns FaceRelationType between a face (as a list) and a point
+FaceRelationType const getPointRelation(std::list<Pgrd> const & rel, Pgrd const &test_point) {
 
 	bool inside = Pgrd::area(rel) < 0;
 
 	for (auto start = rel.begin(); start != rel.end(); ++start) {
 		Pgrd start_vector = *start;
-		Pgrd end_vector = *start.cyclic_next();
+		Pgrd end_vector = *cyclic_next(start, rel);
+
 
 		//does it sit on
 		grd y_length = end_vector.Y - start_vector.Y;
@@ -134,7 +138,8 @@ FaceRelationType const getPointRelation(FLL<Pgrd> const & rel, Pgrd const &test_
 	}
 }
 
-FaceRelation contains(Region<Pgrd> * target, Pgrd const & test_point) {
+//returns true if "for all faces of target, test_point is strictly interior"
+FaceRelation contains(Region * target, Pgrd const & test_point) {
 	for (auto focus : target->getBounds()) {
 
 		FaceRelation result = getPointRelation(*focus, test_point);
@@ -146,7 +151,7 @@ FaceRelation contains(Region<Pgrd> * target, Pgrd const & test_point) {
 	return FaceRelation(FaceRelationType::point_interior, nullptr);
 }
 
-void cleanFace(Face<Pgrd> * target) {
+void cleanFace(Face * target) {
 	auto edge = target->getRoot();
 	auto next = edge->getNext();
 	auto B = next->getEnd()->getPosition() - next->getStart()->getPosition();
@@ -169,7 +174,7 @@ void cleanFace(Face<Pgrd> * target) {
 }
 
 //TODO: self cleaning merge
-bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
+bool merge(Region * a, Region * b) {
 	//since both areas are continuous, its trivial that only one or no boundary pair can touch
 
 	//regions are either strictly internal, strictly external, or weakly external to boundaries
@@ -180,15 +185,15 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 	if (a != b) {
 
 
-		Face<Pgrd> * local_face = nullptr;
-		Face<Pgrd> * target_face = nullptr;
+		Face * local_face = nullptr;
+		Face * target_face = nullptr;
 		for (auto focus_local : a->getBounds()) {
 
 			auto neighbors = focus_local->getNeighbors();
 
 			for (auto focus_target : b->getBounds()) {
 
-				if (neighbors.contains(focus_target)) {
+				if (list_contains(neighbors, focus_target)) {
 					local_face = focus_local;
 					target_face = focus_target;
 					break;
@@ -203,19 +208,19 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 		if (local_face == nullptr) return false;
 
 #ifdef debug_merge
-		UE_LOG(LogTemp, Warning, TEXT("merging"));
-		UE_LOG(LogTemp, Warning, TEXT("a"));
+		debug_proxy(("merging"));
+		debug_proxy(("a"));
 		for (auto bound : a->getBounds()) {
-			UE_LOG(LogTemp, Warning, TEXT("face >k-"));
+			debug_proxy(("face >k-"));
 			for (auto point : bound->getLoopPoints()) {
-				UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+				debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 			}
 		}
-		UE_LOG(LogTemp, Warning, TEXT("b"));
+		debug_proxy(("b"));
 		for (auto bound : b->getBounds()) {
-			UE_LOG(LogTemp, Warning, TEXT("face >b-"));
+			debug_proxy(("face >b-"));
 			for (auto point : bound->getLoopPoints()) {
-				UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+				debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 			}
 		}
 #endif
@@ -229,32 +234,32 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 
 		auto t(b->getBounds());
 		for (auto face : t)
-			a->append(face);
+			a->add_border(face);
 
 		for (auto face : tba) {
 			cleanFace(face);
-			a->append(face);
+			a->add_border(face);
 		}
 
 #ifdef debug_merge
-		UE_LOG(LogTemp, Warning, TEXT("result"));
+		debug_proxy(("result"));
 		for (auto bound : a->getBounds()) {
-			UE_LOG(LogTemp, Warning, TEXT("face >r:"));
+			debug_proxy(("face >r:"));
 			for (auto point : bound->getLoopPoints()) {
-				UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+				debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 			}
 		}
 #endif
-
+		b->getUni()->removeRegion(b);
 		return true;
 	}
 	else {
 #ifdef debug_merge
-		UE_LOG(LogTemp, Warning, TEXT("merging"));
+		debug_proxy(("merging"));
 		for (auto bound : a->getBounds()) {
-			UE_LOG(LogTemp, Warning, TEXT("face >k:"));
+			debug_proxy(("face >k:"));
 			for (auto point : bound->getLoopPoints()) {
-				UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+				debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 			}
 		}
 #endif
@@ -264,12 +269,12 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 
 			for (auto focus_compare = focus_local; focus_compare != bounds.end();) {
 
-				if (focus_local->neighbors(*focus_compare)) {
-					auto tba = focus_local->mergeWithFace(*focus_compare);
+				if ((*focus_local)->neighbors(*focus_compare)) {
+					auto tba = (*focus_local)->mergeWithFace(*focus_compare);
 
 					for (auto face : tba)
 						if (face != *focus_local)
-							a->append(face);
+							a->add_border(face);
 
 					focus_compare = focus_local;
 				}
@@ -279,11 +284,11 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 			++focus_local;
 		}
 #ifdef debug_merge
-		UE_LOG(LogTemp, Warning, TEXT("result"));
+		debug_proxy(("result"));
 		for (auto bound : a->getBounds()) {
-			UE_LOG(LogTemp, Warning, TEXT("face >r:"));
+			debug_proxy(("face >r:"));
 			for (auto point : bound->getLoopPoints()) {
-				UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+				debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 			}
 		}
 #endif
@@ -296,20 +301,24 @@ bool merge(Region<Pgrd> * a, Region<Pgrd> * b) {
 struct intersect {
 
 	Pgrd location;
-	Edge<Pgrd>* mark;
+	Edge* mark;
 	grd distance;
 };
 
-bool intersectSort(intersect *a, intersect *b) {
-	return a->distance > b->distance;
-}
+struct intersectSort{
+	bool operator()(intersect const *a, intersect const *b) const {
+		return a->distance > b->distance;
+	}
+};
+
+typedef std::priority_queue<intersect *, std::vector<intersect *>, intersectSort> sorted_intersects;
 
 //returns a list of intersects sorted by distance
-FLL<intersect *> findIntersects(Pgrd const & start, Pgrd const & stop,
-	FLL<Edge<Pgrd> *> const & canidates) {
+sorted_intersects findIntersects(Pgrd const & start, Pgrd const & stop,
+	std::list<Edge *> const & canidates) {
 
 	//detect intersect
-	FLL<intersect *> product;
+	sorted_intersects product;
 
 	for (auto target : canidates) {
 
@@ -321,13 +330,13 @@ FLL<intersect *> findIntersects(Pgrd const & start, Pgrd const & stop,
 		bool valid = Pgrd::getIntersect(start, stop, test_start, test_stop, intersect_location);
 
 		if (valid) {
-			intersect * output = new intersect();
+			intersect * output = DBG_NEW intersect();
 
 			output->location = intersect_location;
 			output->mark = target;
 			output->distance = (intersect_location - start).SizeSquared();
 
-			product.qInsert(output, intersectSort);
+			product.push(output);
 
 		}
 		else {
@@ -349,43 +358,43 @@ FLL<intersect *> findIntersects(Pgrd const & start, Pgrd const & stop,
 
 				//create an interesect for the ends of each segment, that lie on the other segment
 				if (Pgrd::isOnSegment(start, test_start, test_stop)) {
-					intersect * output = new intersect();
+					intersect * output = DBG_NEW intersect();
 
 					output->location = start;
 					output->mark = target;
 					output->distance = 0;
 
-					product.qInsert(output, intersectSort);
+					product.push(output);
 				}
 
 				if (Pgrd::isOnSegment(stop, test_start, test_stop)) {
-					intersect * output = new intersect();
+					intersect * output = DBG_NEW intersect();
 
 					output->location = stop;
 					output->mark = target;
 					output->distance = (stop - start).SizeSquared();
 
-					product.qInsert(output, intersectSort);
+					product.push(output);
 				}
 
 				if (Pgrd::isOnSegment(test_start, start, stop) && test_start != start && test_start != stop) {
-					intersect * output = new intersect();
+					intersect * output = DBG_NEW intersect();
 
 					output->location = test_start;
 					output->mark = target;
 					output->distance = (test_start - start).SizeSquared();
 
-					product.qInsert(output, intersectSort);
+					product.push(output);
 				}
 
 				if (Pgrd::isOnSegment(test_stop, start, stop) && test_stop != start && test_stop != stop) {
-					intersect * output = new intersect();
+					intersect * output = DBG_NEW intersect();
 
 					output->location = test_stop;
 					output->mark = target;
 					output->distance = (test_stop - start).SizeSquared();
 
-					product.qInsert(output, intersectSort);
+					product.push(output);
 				}
 			}
 		}
@@ -396,20 +405,20 @@ FLL<intersect *> findIntersects(Pgrd const & start, Pgrd const & stop,
 }
 
 //finds interact features for a suballocation, and subidivides region edges where needed
-//returns true if boundary is entirely external
-bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact *>  & details) {
+//returns true if boundary is entirely strictly external
+bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<interact *>  & details) {
 
 	bool exterior = true;
 
 	{
-		FLL<Edge<Pgrd> *> canidates;
+		std::list<Edge *> canidates;
 
 		for (auto canidate_focus : target->getBounds()) {
 			auto tba = canidate_focus->getLoopEdges(); //TODO: rvalues
-			canidates.absorb(tba);
+			canidates.splice(canidates.end(), tba);
 		}
 
-		auto last = boundary.last();
+		auto last = boundary.back();
 		for (auto next : boundary) {
 			//find and perform on all intersects
 
@@ -417,7 +426,8 @@ bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact 
 
 			bool end_collision = false;
 
-			for (auto const & intersect_focus : intersects) {
+			while(!intersects.empty()) {
+				auto * intersect_focus = intersects.top();
 
 				auto mark = intersect_focus->mark;
 
@@ -425,7 +435,7 @@ bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact 
 				if (intersect_focus->location != last && intersect_focus->location != mark->getStart()->getPosition()) {
 
 
-					interact* feature = new interact();
+					interact* feature = DBG_NEW interact();
 
 					feature->location = intersect_focus->location;
 					feature->type = FaceRelationType::point_on_boundary;
@@ -443,7 +453,7 @@ bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact 
 
 						feature->mark = mark->getLast();
 
-						canidates.push(feature->mark);
+						canidates.push_front(feature->mark);
 					}
 
 					if (intersect_focus->location == next) {
@@ -452,8 +462,12 @@ bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact 
 					}
 
 					exterior = false;
-					details.append(feature);
+					details.push_back(feature);
 				}
+
+				delete intersect_focus;
+
+				intersects.pop();
 			}
 
 			if (!end_collision) {
@@ -462,24 +476,26 @@ bool markRegion(Region<Pgrd> * target, FLL<Pgrd> const & boundary, FLL<interact 
 
 
 
-				interact* feature = new interact();
+				interact* feature = DBG_NEW interact();
 
 				feature->location = next;
 				feature->type = state.type;
 				feature->mark = state.relevant;
 
 				exterior = exterior && (state.type == FaceRelationType::point_exterior);
-				details.append(feature);
+				details.push_back(feature);
 			}
 
 			last = next;
 		}
+
+
 	}
 
 	//calculate mid inclusion
 
 	{
-		auto last = details.last();
+		auto last = details.back();
 		for (auto next : details) {
 			last->mid_location = (last->location + next->location) / 2;
 
@@ -519,17 +535,17 @@ bool angledBetween(Pgrd const &A, Pgrd const &B, Pgrd const &test) {
 }
 
 //insert strands into target, and determine face inclusions
-void determineInteriors(Region<Pgrd> * target, FLL<interact *> & details,
-	FLL<Face<Pgrd> *> & exteriors, FLL<Face<Pgrd> *> & interiors) {
+void determineInteriors(Region * target, std::list<Pgrd> const &root_list, std::list<interact *> & details,
+	std::list<Face *> & exteriors, std::list<Face *> & interiors) {
 
 	exteriors = target->getBounds();
 
 	auto last = details.begin();
-	auto next = last.cyclic_next();
+	auto next = cyclic_next(last, details);
 
 
 	//consider first segment, if entirely internal, we need to create an edge from scratch
-	if (last->type == FaceRelationType::point_interior) {
+	if ((*last)->type == FaceRelationType::point_interior) {
 
 		auto into = *next;
 		auto from = *last;
@@ -553,7 +569,7 @@ void determineInteriors(Region<Pgrd> * target, FLL<interact *> & details,
 	}
 
 	while (last != details.end()) {
-		next = last.cyclic_next();
+		next = cyclic_next(last, details);
 
 		auto into = *next;
 		auto from = *last;
@@ -581,10 +597,10 @@ void determineInteriors(Region<Pgrd> * target, FLL<interact *> & details,
 						if (angledBetween(next_vector, created_vector, orientation))
 							into->mark = created;
 
-						if (!interiors.contains(created->getFace()))
-							interiors.push(created->getFace());
+						if (!list_contains(interiors,created->getFace()))
+							interiors.push_front(created->getFace());
 
-						exteriors.push(created->getInv()->getFace());
+						exteriors.push_front(created->getInv()->getFace());
 					}
 					else if (next == details.begin()) {
 						auto relevant = into->mark->getNext()->getInv();
@@ -592,10 +608,10 @@ void determineInteriors(Region<Pgrd> * target, FLL<interact *> & details,
 
 						auto created = target->getUni()->addEdge(from->mark, relevant);
 
-						if (!interiors.contains(created->getFace()))
-							interiors.push(created->getFace());
+						if (!list_contains(interiors, created->getFace()))
+							interiors.push_front(created->getFace());
 
-						exteriors.push(created->getInv()->getFace());
+						exteriors.push_front(created->getInv()->getFace());
 					}
 					else {
 						exteriors.remove(into->mark->getFace());
@@ -611,34 +627,72 @@ void determineInteriors(Region<Pgrd> * target, FLL<interact *> & details,
 	}
 
 	//does the entire boundary lie on a loop
+
+	//get face interacted with (there can only be one due to continuity of regions constraint)
 	if (interiors.empty()) {
+		Face * interacted = nullptr;
+
+		for (auto detail : details)
+			if (detail->type == FaceRelationType::point_on_boundary) {
+				interacted = detail->mark->getFace();
+				break;
+			}
+		if (interacted == nullptr) {
+			//should never happen
+			throw std::logic_error("No Boundary alligned detail found, despite earlier edge case");
+		}
+
+		bool all_alligned = true;
+		for (auto point : interacted->getLoopPoints())
+			if (getPointRelation(root_list, point) != FaceRelationType::point_on_boundary) {
+				all_alligned = false;
+				break;
+			}
+
+		//debug_proxy("A", interacted->area().n);
+		//debug_proxy("A*", Pgrd::area(interacted->getLoopPoints()).n);
+		//debug_proxy("B", Pgrd::area(root_list).n);
+
+
+
+		bool root_wrap = Pgrd::area(root_list) > 0;
+		bool target_wrap = interacted->area() > 0;
+
+		if ((all_alligned && (root_wrap == target_wrap)) || (!all_alligned && !root_wrap)) {
+			//debug_proxy("CONSUME");
+			interiors.splice(interiors.end(), exteriors);
+		}
+	}
+
+	/*if (interiors.empty()) {
 		auto from = *details.begin();
 
 
 		if (from->type == FaceRelationType::point_on_boundary) {
 			auto face = from->mark->getFace();
+			debug_proxy("CONSUME");
 
 			exteriors.remove(face);
 
-			interiors.push(face);
+			interiors.push_front(face);
 		}
-	}
+	}*/
 }
 
-void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
-	FLL<Region<Pgrd> *> & exteriors, FLL<Region<Pgrd> *> & interiors) {
+void subAllocate(Region * target, std::list<Pgrd> const & boundary,
+	std::list<Region *> & exteriors, std::list<Region *> & interiors) {
 
 #ifdef debug_suballocate
-	UE_LOG(LogTemp, Warning, TEXT("SA"));
-	UE_LOG(LogTemp, Warning, TEXT("Boundary >g:"));
+	debug_proxy("SA");
+	debug_proxy("Boundary >g:");
 	for (auto point : boundary) {
-		UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+		debug_proxy("", point.X.n, point.Y.n);
 	}
 
 	for (auto face : target->getBounds()) {
-		UE_LOG(LogTemp, Warning, TEXT("Face >k-"));
+		debug_proxy("Face >k-");
 		for (auto point : face->getLoopPoints()) {
-			UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+			debug_proxy("",point.X.n, point.Y.n);
 		}
 	}
 #endif
@@ -649,41 +703,55 @@ void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
 	//interior
 	//subdivides are performed on inverse to preserve marks
 
-	FLL<interact *> details;
+	std::list<interact *> details;
 
 	bool exterior = markRegion(target, boundary, details);
 
-	FLL<Face<Pgrd> *> exterior_faces;
-	FLL<Face<Pgrd> *> interior_faces;
+	std::list<Face *> exterior_faces;
+	std::list<Face *> interior_faces;
 
 #ifdef debug_suballocate
 	for (auto detail : details) {
 		if (detail->type == FaceRelationType::point_exterior) {
-			UE_LOG(LogTemp, Warning, TEXT("(%f,%f) : exterior"), detail->location.X.n, detail->location.Y.n);
+			debug_proxy("exterior ", detail->location.X.n, detail->location.Y.n);
 		}
 		else if (detail->type == FaceRelationType::point_interior) {
-			UE_LOG(LogTemp, Warning, TEXT("(%f,%f) : interior"), detail->location.X.n, detail->location.Y.n);
+			debug_proxy("interior ", detail->location.X.n, detail->location.Y.n);
 		}
 		else {
-			UE_LOG(LogTemp, Warning, TEXT("(%f,%f) : bound"), detail->location.X.n, detail->location.Y.n);
+			debug_proxy("bound ", detail->location.X.n, detail->location.Y.n);
 		}
 
 	}
 #endif
 
 	if (exterior) {
+		//bool interior = true;
+		//for (auto face : target->getBounds()) {
+		//	for (auto point : face->getLoopPoints()) {
+		//		interior = (getPointRelation(boundary, point) != FaceRelationType::point_exterior);
+		//		if (!interior) break;
+		//	}
+		//	if (!interior) break;
+		//}
+		//if (interior) {
 
 		auto test = (*target->getBounds().begin())->getRoot()->getStart()->getPosition();
-		if (getPointRelation(boundary, test) == FaceRelationType::point_interior) {
-
-			interiors.push(target);
+		if(getPointRelation(boundary, test) == FaceRelationType::point_interior) {
+			interiors.push_front(target);
+#ifdef debug_suballocate
+			debug_proxy("EXTERIOR EDGE CASE: contains target");
+#endif
 		}
 		else {
-			exteriors.push(target);
+			exteriors.push_front(target);
+#ifdef debug_suballocate
+			debug_proxy("EXTERIOR EDGE CASE: no overlap");
+#endif
 		}
 	}
 	else {
-		determineInteriors(target, details, exterior_faces, interior_faces);
+		determineInteriors(target, boundary, details, exterior_faces, interior_faces);
 
 		//find regions, place holes
 
@@ -696,7 +764,7 @@ void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
 
 		//for each interior face, create a region, add any symmetricly contained exterior faces to that region
 		for (auto interior_face : interior_faces) {
-			Region<Pgrd> * novel = target->getUni()->region();
+			Region * novel = target->getUni()->region();
 
 			auto interior_root = interior_face->getRoot()->getStart()->getPosition();
 
@@ -713,26 +781,29 @@ void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
 				++exterior_focus;
 
 				if (ex_contains_in.type == FaceRelationType::point_interior && in_contains_ex.type == FaceRelationType::point_interior) {
-					novel->append(exterior_face);
+					novel->add_border(exterior_face);
 
 					exterior_faces.remove(exterior_face);
 				}
 			}
 
-			novel->append(interior_face);
+			novel->add_border(interior_face);
 
-			interiors.push(novel);
+			interiors.push_front(novel);
+#ifdef debug_suballocate
+			debug_proxy("added Interior Face");
+#endif
 		}
 
 		//for each exterior face, see which faces are symmetric with it and create regions
 
 		for (auto exterior_focus = exterior_faces.begin(); exterior_focus != exterior_faces.end(); ++exterior_focus) {
-			Region<Pgrd> * novel = target->getUni()->region();
+			Region * novel = target->getUni()->region();
 
 			auto base_face = *exterior_focus;
 			auto base_root = base_face->getRoot()->getStart()->getPosition();
 
-			for (auto compare = exterior_focus.next(); compare != exterior_faces.end();) {
+			for (auto compare = std::next(exterior_focus); compare != exterior_faces.end();) {
 
 				auto comp_face = *compare;
 				auto comp_root = comp_face->getRoot()->getStart()->getPosition();
@@ -743,34 +814,40 @@ void subAllocate(Region<Pgrd> * target, FLL<Pgrd> const & boundary,
 				++compare;
 
 				if (comp_contains_base.type == FaceRelationType::point_interior && base_contains_comp.type == FaceRelationType::point_interior) {
-					novel->append(comp_face);
+					novel->add_border(comp_face);
 
 					exterior_faces.remove(comp_face);
 				}
 			}
 
-			novel->append(base_face);
+			novel->add_border(base_face);
 
-			exteriors.push(novel);
+			exteriors.push_front(novel);
+#ifdef debug_suballocate
+			debug_proxy("added Exterior Face");
+#endif
 		}
 
 		target->getUni()->removeRegion(target);
 	}
+
+	for (auto detail : details)
+		delete detail;
 }
 
-void cleanRegion(Region<Pgrd> * target) {
+void cleanRegion(Region * target) {
 
 #ifdef debug_clean
-	UE_LOG(LogTemp, Warning, TEXT("Clean Region"));
+	debug_proxy(("Clean Region"));
 #endif
 	for (auto border : target->getBounds()) {
 		auto og_root = border->getRoot();
 		auto focus = og_root;
 
 #ifdef debug_clean
-		UE_LOG(LogTemp, Warning, TEXT("Face >k:"));
+		debug_proxy(("Face >k:"));
 		for (auto point : border->getLoopPoints()) {
-			UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), point.X.n, point.Y.n);
+			debug_proxy(("(%f,%f)"), point.X.n, point.Y.n);
 		}
 #endif
 
@@ -802,12 +879,12 @@ void cleanRegion(Region<Pgrd> * target) {
 
 				if (parallel) {
 #ifdef debug_clean
-					UE_LOG(LogTemp, Warning, TEXT("contract >r:"));
-					UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), start.X.n, start.Y.n);
-					UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), mid.X.n, mid.Y.n);
-					UE_LOG(LogTemp, Warning, TEXT("contract >g:"));
-					UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), mid.X.n, mid.Y.n);
-					UE_LOG(LogTemp, Warning, TEXT("(%f,%f)"), end.X.n, end.Y.n);
+					debug_proxy(("contract >r:"));
+					debug_proxy(("(%f,%f)"), start.X.n, start.Y.n);
+					debug_proxy(("(%f,%f)"), mid.X.n, mid.Y.n);
+					debug_proxy(("contract >g:"));
+					debug_proxy(("(%f,%f)"), mid.X.n, mid.Y.n);
+					debug_proxy(("(%f,%f)"), end.X.n, end.Y.n);
 #endif
 					next->getInv()->contract();
 				}
@@ -822,12 +899,12 @@ void cleanRegion(Region<Pgrd> * target) {
 	}
 }
 
-Region<Pgrd> * RegionAdd(Region<Pgrd> * target, Edge<Pgrd> * A, Edge<Pgrd> * B) {
+Region * RegionAdd(Region * target, Edge * A, Edge * B) {
 	auto A_face = A->getFace();
 	auto B_face = B->getFace();
 
 
-	Region<Pgrd> * result = nullptr;
+	Region * result = nullptr;
 
 	if (A_face->getGroup() != target || B_face->getGroup() != target)
 		return nullptr;
@@ -841,19 +918,19 @@ Region<Pgrd> * RegionAdd(Region<Pgrd> * target, Edge<Pgrd> * A, Edge<Pgrd> * B) 
 
 		result = target->getUni()->region();
 
-		result->append(B_face);
+		result->add_border(B_face);
 
-		FLL<Face<Pgrd> *> transfers;
+		std::list<Face *> transfers;
 
 		for (auto edge : target->getBounds())
 			if (edge == A_face)
 				continue;
 			else if (getPointRelation(*edge, B_face->getRoot()->getStart()->getPosition()).type == FaceRelationType::point_interior
 				&& getPointRelation(*B_face, edge->getRoot()->getStart()->getPosition()).type == FaceRelationType::point_interior)
-				transfers.append(edge);
+				transfers.push_back(edge);
 
 		for (auto edge : transfers)
-			result->append(edge);
+			result->add_border(edge);
 	}
 	else {
 		//we will be connecting two boundaries

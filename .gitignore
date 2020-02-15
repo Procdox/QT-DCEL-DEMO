@@ -34,5 +34,8 @@
 *.ilk
 *.pdb
 
+#files
+x64/
+QT-DCEL-DEMO/x64/
 ./QT-DCEL-DEMO/GeneratedFiles/*
 .vs/

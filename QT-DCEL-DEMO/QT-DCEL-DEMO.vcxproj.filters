@@ -2,9 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="DCEL_Demo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="renderArea.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -22,6 +19,24 @@
     </ClCompile>
     <ClCompile Include="DCEL\Room_Boundary.cpp">
       <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\DCEL.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="Voronoi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\debugger.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="DCEL\SimplexNoise.cpp">
+      <Filter>DCEL</Filter>
+    </ClCompile>
+    <ClCompile Include="TRACE\field_model.cpp">
+      <Filter>TRACE</Filter>
+    </ClCompile>
+    <ClCompile Include="TRACE\tracer.cpp">
+      <Filter>TRACE</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -48,6 +63,9 @@
     <Filter Include="DCEL">
       <UniqueIdentifier>{bc9bdc48-918b-4a2b-b8d3-eac39d390dac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TRACE">
+      <UniqueIdentifier>{2281d0ce-8f09-4bd5-9679-2645841f4fae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="DCEL_Demo.h">
@@ -56,9 +74,21 @@
     <QtMoc Include="renderArea.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="DCEL_Demo.cpp">
+      <Filter>Source Files</Filter>
+    </QtMoc>
+    <QtMoc Include="TRACER_Demo.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="TRACER_Demo.cpp">
+      <Filter>Source Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="DCEL_Demo.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="TRACER_Demo.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>
@@ -69,9 +99,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DCEL\DCEL.h">
-      <Filter>DCEL</Filter>
-    </ClInclude>
-    <ClInclude Include="DCEL\FLL.h">
       <Filter>DCEL</Filter>
     </ClInclude>
     <ClInclude Include="DCEL\Grid.h">
@@ -91,6 +118,27 @@
     </ClInclude>
     <ClInclude Include="DCEL\Room_Boundary.h">
       <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="Voronoi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\debugger.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="DCEL\SimplexNoise.h">
+      <Filter>DCEL</Filter>
+    </ClInclude>
+    <ClInclude Include="TRACE\field_model.h">
+      <Filter>TRACE</Filter>
+    </ClInclude>
+    <ClInclude Include="TRACE\tracer.h">
+      <Filter>TRACE</Filter>
+    </ClInclude>
+    <ClInclude Include="TRACE\kd_tree.h">
+      <Filter>TRACE</Filter>
+    </ClInclude>
+    <ClInclude Include="TRACE\grid_finder.h">
+      <Filter>TRACE</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
