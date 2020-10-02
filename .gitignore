@@ -42,3 +42,6 @@ x64/
 QT-DCEL-DEMO/x64/
 QT-DCEL-DEMO/GeneratedFiles/*
 .vs/
+.p4root/*
+p4config.txt
+p4ignore.txt
