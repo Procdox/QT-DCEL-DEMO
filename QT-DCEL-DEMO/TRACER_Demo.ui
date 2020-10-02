@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1069</width>
+    <width>1379</width>
     <height>886</height>
    </rect>
   </property>
@@ -17,8 +17,8 @@
    <widget class="QSpinBox" name="ui_seed">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>780</y>
+      <x>70</x>
+      <y>820</y>
       <width>81</width>
       <height>22</height>
      </rect>
@@ -29,71 +29,71 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>1051</width>
-      <height>761</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="ui_reset">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>810</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Reset</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="ui_progress">
-    <property name="geometry">
-     <rect>
-      <x>430</x>
-      <y>810</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Progress</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="ui_step">
-    <property name="geometry">
-     <rect>
-      <x>430</x>
-      <y>780</y>
-      <width>81</width>
-      <height>22</height>
+      <width>1361</width>
+      <height>801</height>
      </rect>
     </property>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>780</y>
+      <x>20</x>
+      <y>820</y>
       <width>47</width>
-      <height>13</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
      <string>Seed</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QPushButton" name="ui_start">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>780</y>
+      <x>370</x>
+      <y>820</y>
       <width>81</width>
-      <height>16</height>
+      <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>Number of Steps</string>
+     <string>Run</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="ui_state">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>820</y>
+      <width>201</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>820</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Current State:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ui_current">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>820</y>
+      <width>221</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>TextLabel</string>
     </property>
    </widget>
   </widget>
@@ -102,7 +102,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1069</width>
+     <width>1379</width>
      <height>21</height>
     </rect>
    </property>

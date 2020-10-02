@@ -63,5 +63,7 @@ public:
 
 	grd sqrt() const;
 
+  grd clamp(grd min, grd max) const;
+
 	static grd abs(const grd &target);
 };

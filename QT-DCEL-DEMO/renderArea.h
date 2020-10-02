@@ -9,24 +9,29 @@
 
 #include "./DCEL/Room_Boundary.h"
 
-using Buffer = std::list<std::pair<Pgrd, Pgrd>>;
+using LineBuffer = std::vector<std::pair<Pgrd, Pgrd>>;
+using PolygonBuffer = std::vector<std::vector<Pgrd>>;
+using RegionBuffer = std::list<Region *>;
 
 class RenderArea : public QWidget
 {
 	Q_OBJECT
 
+  using Shape = std::vector<QPolygonF>;
+  using Group = std::pair<std::vector<Shape>, QColor>;
+  using Segment = std::pair<LineBuffer, QColor>;
+
 public:
-	using Shape = std::list<QPolygonF>;
-	using Group = std::pair<std::list<Shape>, QColor>;
-	using Segment = std::pair<Buffer, QColor>;
+	
 
 	RenderArea(QWidget *parent = nullptr);
 
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
-	void addGrouping(const std::list<Region *>& input, const QColor color);
-	void addBuffer(const Buffer& input, const QColor color);
+	void addRegionBuffer(const RegionBuffer& input, const QColor color);
+	void addLineBuffer(const LineBuffer& input, const QColor color);
+  void addPolygonBuffer(const PolygonBuffer& input, const QColor color);
 	void resetDraw();
 	void resetView();
 
@@ -38,8 +43,8 @@ private:
 	virtual void mousePressEvent(QMouseEvent * e) override;
 	virtual void wheelEvent(QWheelEvent * e) override;
 
-	std::list<Group> Groupings;
-	std::list<Segment> Segments;
+	std::vector<Group> Groupings;
+	std::vector<Segment> Segments;
 
 	QPointF last_mouse_pos;
 	QPointF view_center;

@@ -110,8 +110,8 @@ void DCEL_Demo::render_finished() {
 	outer.setAlphaF(.2);
 
 	ui_render->resetDraw();
-	ui_render->addGrouping(d->current_config->halls(), inner);
-	ui_render->addGrouping(d->current_config->blocks(), outer);
+	ui_render->addRegionBuffer(d->current_config->halls(), inner);
+	ui_render->addRegionBuffer(d->current_config->blocks(), outer);
 
 	delete d->current_config;
 	d->processing = false;

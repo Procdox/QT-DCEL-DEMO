@@ -140,5 +140,8 @@
     <ClInclude Include="TRACE\grid_finder.h">
       <Filter>TRACE</Filter>
     </ClInclude>
+    <ClInclude Include="TRACE\cell.h">
+      <Filter>TRACE</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

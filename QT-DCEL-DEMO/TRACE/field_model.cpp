@@ -3,7 +3,7 @@
 Tensor_Effect::Tensor_Effect(const Pgrd& _p)
 : position(_p) {}
 
-Pgrd Tensor_Effect::AtPoint(const Pgrd & target, const grd& decay_constant) const {
+Pgrd Tensor_Effect::AtPoint(const Pgrd& target, const grd& decay_constant) const {
 	const Pgrd offset = target - position;
 	const grd decay = exp((-decay_constant * offset.SizeSquared()).n);
 	return generate(offset) *= decay;
@@ -36,6 +36,15 @@ Pgrd Tensor_Field::SumPoint(const Pgrd& target) const {
 	for (const auto& effect : tensor_effects)
 		basis += effect->AtPoint(target, decay_constant);
 	return basis;
+}
+
+Pgrd Tensor_Field::SumPointContextAware(const Pgrd& target, const Pgrd& direction) const {
+  Pgrd basis;
+  for (const auto& effect : tensor_effects){
+    const Pgrd uncorrected = effect->AtPoint(target, decay_constant);
+    basis += grd::abs(direction.NormDot(uncorrected)) < .525 ? Pgrd(uncorrected.Y, -uncorrected.X) : uncorrected;
+  }
+  return basis;
 }
 
 void Tensor_Field::AddEffect(Tensor_Effect* target) {

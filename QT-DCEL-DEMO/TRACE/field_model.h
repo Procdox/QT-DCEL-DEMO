@@ -36,6 +36,7 @@ public:
 	}
 	Tensor_Field(const grd&);
 	Pgrd SumPoint(const Pgrd&) const;
+  Pgrd SumPointContextAware(const Pgrd&, const Pgrd&) const;
 	void AddEffect(Tensor_Effect*);
 
 private:

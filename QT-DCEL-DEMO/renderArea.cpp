@@ -56,40 +56,41 @@ void RenderArea::paintEvent(QPaintEvent * /* event */)
 	
 	brush.setStyle(Qt::SolidPattern);
 
-	for (auto group : Groupings) {
-		brush.setColor(group.second);
+  for (auto set : Segments) {
+    painter.setPen(set.second);
 
-		for (auto polygon : group.first) {
-			QPainterPath positive;
-			for (auto bound : polygon) {
-				positive.addPolygon(((bound * offset) * frustrum) * center);
+    for (auto line : set.first) {
+      QPolygonF temp;
+      auto A = ((QPointF(line.first.X.n, line.first.Y.n) * offset) * frustrum) * center;
+      auto B = ((QPointF(line.second.X.n, line.second.Y.n) * offset) * frustrum) * center;
 
-			}
-			painter.drawPath(positive);
-			painter.fillPath(positive, brush);
-			//painter.drawPath(path);
-		}
-	}
+      temp.append(A);
+      temp.append(B);
 
-	for (auto set : Segments) {
-		brush.setColor(set.second);
+      QPainterPath positive;
+      positive.addPolygon(temp);
+      painter.drawPath(positive);
+    }
+  }
 
-		for (auto line : set.first) {
-			QPolygonF temp;
-			auto A = ((QPointF(line.first.X.n, line.first.Y.n) * offset) * frustrum) * center;
-			auto B = ((QPointF(line.second.X.n, line.second.Y.n) * offset) * frustrum) * center;
+  painter.setPen(Qt::black);
 
-			temp.append(A);
-			temp.append(B);
+  for (auto group : Groupings) {
+    brush.setColor(group.second);
 
-			QPainterPath positive;
-			positive.addPolygon(temp);
-			painter.drawPath(positive);
-		}
-	}
+    for (auto polygon : group.first) {
+      QPainterPath positive;
+      for (auto bound : polygon) {
+        positive.addPolygon(((bound * offset) * frustrum) * center);
+      }
+      //painter.drawPath(positive);
+      painter.fillPath(positive, brush);
+      //painter.drawPath(path);
+    }
+  }
 }
 
-void RenderArea::addGrouping(const std::list<Region *>& input, const QColor color) {
+void RenderArea::addRegionBuffer(const RegionBuffer& input, const QColor color) {
 	Group result;
 	result.second = color;
 
@@ -100,7 +101,7 @@ void RenderArea::addGrouping(const std::list<Region *>& input, const QColor colo
 			QPolygonF poly;
 			//for (auto point : inset(face))
 			for (auto point : face->getLoopPoints())
-				poly.append(QPointF(point.X.n, point.Y.n));
+				poly.append(QPointF(point.X.clamp(-1000, 1000).n, point.Y.clamp(-1000, 1000).n));
 
 			temp.push_back(std::move(poly));
 		}
@@ -112,13 +113,31 @@ void RenderArea::addGrouping(const std::list<Region *>& input, const QColor colo
 	update();
 }
 
-void RenderArea::addBuffer(const Buffer& input, const QColor color) {
-	Group result;
-	result.second = color;
-
+void RenderArea::addLineBuffer(const LineBuffer& input, const QColor color) {
 	Segments.push_back(std::make_pair(input, color));
 
 	update();
+}
+
+void RenderArea::addPolygonBuffer(const PolygonBuffer& input, const QColor color) {
+  Group result;
+  result.second = color;
+
+  for (auto region : input) {
+    Shape temp;
+
+    QPolygonF poly;
+    for (auto point : region)
+      poly.append(QPointF(point.X.clamp(-1000,1000).n, point.Y.clamp(-1000, 1000).n));
+
+    std::vector<QPolygonF> shape;
+    shape.push_back(poly);
+    result.first.push_back(std::move(shape));
+  }
+
+  Groupings.push_back(std::move(result));
+
+  update();
 }
 
 void RenderArea::resetDraw() {

@@ -12,9 +12,11 @@ public:
 	TRACER_Demo(QWidget *parent = Q_NULLPTR);
 
 public slots:
-	void start_render();
-	void progress_render();
-	void update_render(Buffer*);
+  void start();
+
+  void render_linebuffer(LineBuffer*, QColor);
+	void render_polygonbuffer(PolygonBuffer*, QColor);
+  void update_state(int);
 
 private:
 	class Data;
@@ -25,8 +27,8 @@ private:
 	RenderArea * ui_render;
 
 	QSpinBox * ui_seed = 0;
-	QSpinBox * ui_step = 0;
 
-	QPushButton * ui_reset = 0;
-	QPushButton * ui_progress = 0;
+	QPushButton * ui_start = 0;
+  QComboBox * ui_state = 0;
+  QLabel * ui_label = 0;
 };

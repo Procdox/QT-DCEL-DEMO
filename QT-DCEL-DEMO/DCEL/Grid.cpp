@@ -202,6 +202,10 @@ grd grd::sqrt() const
 	return grd(_CMATH_::sqrt(n));
 }
 
+grd grd::clamp(grd min, grd max) const {
+  return (*this > min ? (*this < max ? *this : max) : min);
+}
+
 grd grd::abs(const grd &target) {
 	return target.n < 0.0 ? -target : target;
 }

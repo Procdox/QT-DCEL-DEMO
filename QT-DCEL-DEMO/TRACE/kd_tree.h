@@ -15,6 +15,9 @@ public:
 		t data;
 		KD_Branch* left = nullptr;
 		KD_Branch* right = nullptr;
+    
+    KD_Branch(t _data)
+    : data(_data) {}
 
 	public:
 		t Data() const { return data; }
@@ -33,10 +36,9 @@ public:
 		if (root) delete root;
 	}
 
-	void AddPoint(const Pgrd insert, const t _data) {
-		KD_Branch* novel_branch = new KD_Branch();
+	void AddPoint(const Pgrd& insert, t _data) {
+		KD_Branch* novel_branch = new KD_Branch(_data);
 		novel_branch->position = insert;
-		novel_branch->data = _data;
 
 		//special root case
 		if (root == nullptr) {

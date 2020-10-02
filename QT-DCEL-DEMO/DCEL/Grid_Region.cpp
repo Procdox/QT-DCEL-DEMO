@@ -3,7 +3,7 @@
 #include <queue>
 #include "debugger.h"
 
-//#define debug_suballocate
+#define debug_suballocate
 //#define debug_merge
 //#define debug_clean
 
@@ -330,14 +330,10 @@ sorted_intersects findIntersects(Pgrd const & start, Pgrd const & stop,
 		bool valid = Pgrd::getIntersect(start, stop, test_start, test_stop, intersect_location);
 
 		if (valid) {
-			intersect * output = DBG_NEW intersect();
-
-			output->location = intersect_location;
-			output->mark = target;
-			output->distance = (intersect_location - start).SizeSquared();
+			intersect * output = DBG_NEW intersect{ intersect_location, target, 
+        (intersect_location - start).SizeSquared() };
 
 			product.push(output);
-
 		}
 		else {
 			//parrallel test
@@ -410,13 +406,15 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 
 	bool exterior = true;
 
-	{
-		std::list<Edge *> canidates;
+  std::list<Edge *> canidates;
 
-		for (auto canidate_focus : target->getBounds()) {
-			auto tba = canidate_focus->getLoopEdges(); //TODO: rvalues
-			canidates.splice(canidates.end(), tba);
-		}
+  for (auto canidate_focus : target->getBounds()) {
+    auto tba = canidate_focus->getLoopEdges(); //TODO: rvalues
+    canidates.splice(canidates.end(), tba);
+  }
+
+	{
+		
 
 		auto last = boundary.back();
 		for (auto next : boundary) {
@@ -428,6 +426,7 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 
 			while(!intersects.empty()) {
 				auto * intersect_focus = intersects.top();
+        intersects.pop();
 
 				auto mark = intersect_focus->mark;
 
@@ -439,7 +438,6 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 
 					feature->location = intersect_focus->location;
 					feature->type = FaceRelationType::point_on_boundary;
-
 
 					if (intersect_focus->location == mark->getEnd()->getPosition()) {
 						//no need to subdivide
@@ -466,15 +464,30 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 				}
 
 				delete intersect_focus;
-
-				intersects.pop();
 			}
 
+      auto last_state = contains(target, last);
+      auto state = contains(target, next);
+      if(details.empty()){
+        if ((last_state.type == FaceRelationType::point_exterior && state.type == FaceRelationType::point_interior)
+          || (last_state.type == FaceRelationType::point_interior && state.type == FaceRelationType::point_exterior)) {
+
+          auto debug_intersects = findIntersects(last, next, canidates);
+
+          throw std::logic_error("no intersects found, despite change in face relation");
+        }
+      }
+      else {
+        if ((details.back()->type == FaceRelationType::point_exterior && state.type == FaceRelationType::point_interior)
+          || (details.back()->type == FaceRelationType::point_interior && state.type == FaceRelationType::point_exterior)) {
+
+          auto debug_intersects = findIntersects(last, next, canidates);
+
+          throw std::logic_error("no intersects found, despite change in face relation");
+        }
+      }
+
 			if (!end_collision) {
-
-				auto state = contains(target, next);
-
-
 
 				interact* feature = DBG_NEW interact();
 
@@ -488,13 +501,11 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 
 			last = next;
 		}
+  }
 
-
-	}
 
 	//calculate mid inclusion
-
-	{
+  {
 		auto last = details.back();
 		for (auto next : details) {
 			last->mid_location = (last->location + next->location) / 2;
@@ -502,6 +513,51 @@ bool markRegion(Region * target, std::list<Pgrd> const & boundary, std::list<int
 			auto result = contains(target, last->mid_location);
 
 			last->mid_type = result.type;
+
+#if 1 // do inclusion checks
+      if ((last->type == FaceRelationType::point_exterior && next->type == FaceRelationType::point_interior)
+      || (last->type == FaceRelationType::point_interior && next->type == FaceRelationType::point_exterior)) {
+
+        auto debug_intersects = findIntersects(last->location, next->location, canidates);
+
+        throw std::logic_error("Missing PoB transition, last to next");
+      }
+  
+      if ((last->type == FaceRelationType::point_exterior && last->mid_type == FaceRelationType::point_interior)
+        || (last->type == FaceRelationType::point_interior && last->mid_type == FaceRelationType::point_exterior)) {
+
+        auto debug_intersects = findIntersects(last->location, next->location, canidates);
+
+        throw std::logic_error("Missing PoB transition, last to mid");
+      }
+
+      if ((last->mid_type == FaceRelationType::point_exterior && next->type == FaceRelationType::point_interior)
+        || (last->mid_type == FaceRelationType::point_interior && next->type == FaceRelationType::point_exterior)) {
+
+        auto debug_intersects = findIntersects(last->location, next->location, canidates);
+
+        throw std::logic_error("Missing PoB transition, mid to next");
+      }
+
+      if (last->mid_type == FaceRelationType::point_on_boundary && (last->type != FaceRelationType::point_on_boundary || next->type != FaceRelationType::point_on_boundary)) {
+        
+        auto debug_intersects = findIntersects(last->location, next->location, canidates);
+
+        debug_proxy("detail:");
+        debug_proxy("", last->location.X.n, last->location.Y.n);
+        debug_proxy("", last->mid_location.X.n, last->mid_location.Y.n);
+        debug_proxy("", next->location.X.n, next->location.Y.n);
+        debug_proxy("intersects:");
+        while(!debug_intersects.empty()){
+          auto * intersect = debug_intersects.top();
+          debug_intersects.pop();
+          debug_proxy("", intersect->location.X.n, intersect->location.Y.n);
+          delete intersect;
+         }
+
+        throw std::logic_error("mid cannot be on boundary for a PoB transition edge");
+      }
+#endif
 
 			last = next;
 		}
@@ -576,6 +632,7 @@ void determineInteriors(Region * target, std::list<Pgrd> const &root_list, std::
 
 		if (from->type != FaceRelationType::point_exterior) {
 			if (into->type == FaceRelationType::point_interior) {
+        if(from->mark == nullptr) throw;
 
 				into->mark = target->getUni()->addEdge(from->mark, into->location);
 
@@ -621,7 +678,13 @@ void determineInteriors(Region * target, std::list<Pgrd> const &root_list, std::
 					//}
 				}
 			}
+      else if(from->type == FaceRelationType::point_interior && into->type == FaceRelationType::point_exterior){
+        throw;
+      }
 		}
+    else if(into->type == FaceRelationType::point_interior) {
+      throw;
+    }
 
 		++last;
 	}

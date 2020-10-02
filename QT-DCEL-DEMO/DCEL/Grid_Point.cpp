@@ -112,6 +112,9 @@ void Pgrd::Normalize() {
 grd Pgrd::Dot(const Pgrd &b) const {
 	return X * b.X + Y * b.Y;
 }
+grd Pgrd::NormDot(const Pgrd &b) const {
+  return Dot(b)/(Size()*b.Size());
+}
 
 Pgrd Pgrd::projectToSegment(Pgrd const & A, Pgrd const & B) const
 {
@@ -125,6 +128,10 @@ Pgrd Pgrd::projectToSegment(Pgrd const & A, Pgrd const & B) const
 	return result;
 }
 
+grd Pgrd::triArea(const Pgrd& a, const Pgrd& b, const Pgrd& c) {
+  return (a.X*(b.Y-c.Y) + b.X*(c.Y-a.Y) + c.X*(a.Y-b.Y)) / 2;
+}
+
 point_near_segment_state Pgrd::getState(const Pgrd &start, const Pgrd &end) const {
 	if (*this == start) {
 		return on_start;
@@ -133,7 +140,7 @@ point_near_segment_state Pgrd::getState(const Pgrd &start, const Pgrd &end) cons
 		return on_end;
 	}
 
-	const grd TWAT = (X * start.Y - Y * start.X) + (start.X * end.Y - start.Y * end.X) + (end.X * Y - end.Y * X);
+	const grd TWAT = triArea(start, *this, end);
 	if (TWAT > 0) {
 		return left_of_segment;
 	}
@@ -150,6 +157,10 @@ point_near_segment_state Pgrd::getState(const Pgrd &start, const Pgrd &end) cons
 	}
 
 	return on_segment;
+}
+
+Pgrd Pgrd::clamp(const Pgrd& min, const Pgrd& max) const {
+  return Pgrd(X.clamp(min.X,max.X),Y.clamp(min.Y,max.Y));
 }
 
 bool Pgrd::areParrallel(const Pgrd &A_S, const Pgrd &A_E, const Pgrd &B_S, const Pgrd &B_E) {

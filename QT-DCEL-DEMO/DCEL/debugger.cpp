@@ -22,5 +22,5 @@ void debug_proxy(const char * what, int input) {
 }
 
 void debug_proxy(const char * what, double x, double y) {
-	qDebug() << what << "(" << x << "," << y << ")";
+	qDebug() << x << "," << y;
 }
