@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# QT preprocessor files
+*.moc
+
 # Compiled Object files
 *.slo
 *.lo
@@ -37,5 +40,5 @@
 #files
 x64/
 QT-DCEL-DEMO/x64/
-./QT-DCEL-DEMO/GeneratedFiles/*
+QT-DCEL-DEMO/GeneratedFiles/*
 .vs/
