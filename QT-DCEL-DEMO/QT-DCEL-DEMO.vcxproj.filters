@@ -66,6 +66,9 @@
     <Filter Include="TRACE">
       <UniqueIdentifier>{2281d0ce-8f09-4bd5-9679-2645841f4fae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Control">
+      <UniqueIdentifier>{5e980757-bb07-4aa1-82b6-0a0a7b806897}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="DCEL_Demo.h">
@@ -143,5 +146,21 @@
     <ClInclude Include="TRACE\cell.h">
       <Filter>TRACE</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.gitattributes">
+      <Filter>Source Control</Filter>
+    </None>
+    <None Include="..\.gitignore">
+      <Filter>Source Control</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\p4config.txt">
+      <Filter>Source Control</Filter>
+    </Text>
+    <Text Include="..\p4ignore.txt">
+      <Filter>Source Control</Filter>
+    </Text>
   </ItemGroup>
 </Project>
