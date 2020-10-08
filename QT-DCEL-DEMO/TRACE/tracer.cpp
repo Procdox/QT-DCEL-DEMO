@@ -14,16 +14,16 @@
 #define _TENSOR_THRESH_ 0.001
 
 double pRandom(double a, double b) {
-	double random = ((double)rand()) / (double)RAND_MAX;
-	double diff = b - a;
-	double r = random * diff;
-	return a + r;
+  double random = ((double)rand()) / (double)RAND_MAX;
+  double diff = b - a;
+  double r = random * diff;
+  return a + r;
 }
 
 Pgrd rotateVector(const Pgrd& src, grd delta) {
-	const double co = cos(delta.n);
-	const double si = sin(delta.n);
-	return Pgrd(src.X*co - src.Y*si, src.X*si + src.Y*co);
+  const double co = cos(delta.n);
+  const double si = sin(delta.n);
+  return Pgrd(src.X*co - src.Y*si, src.X*si + src.Y*co);
 }
 
 Pgrd randomUnitVector() {
@@ -399,12 +399,12 @@ Network::CreationWizard::CreationWizard(Network& _net)
 
 //TODO: replace with project and skew method (with pre-emptive crossing check)
 void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
-	//goes for a set count in layerinfo or until intersection
-	
+  //goes for a set count in layerinfo or until intersection
+  
   Pgrd current = seed.node->position;
   Pgrd last = current;
 
-	Pgrd current_heading = seed.heading;
+  Pgrd current_heading = seed.heading;
 
   { //update our trajectory
     Pgrd adjusted_heading = net.terrain.SumPointContextAware(current, current_heading);
@@ -421,18 +421,18 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
     }
   }
 
-	Pgrd perpendicular;
+  Pgrd perpendicular;
 
-	
+  
 
-	std::vector<std::pair<Pgrd,Pgrd>> suggested_spots;
+  std::vector<std::pair<Pgrd,Pgrd>> suggested_spots;
 
-	CreationNode * connect = nullptr;
-	bool KEEP = true;
-	bool BOUNDED = true;
+  CreationNode * connect = nullptr;
+  bool KEEP = true;
+  bool BOUNDED = true;
   bool DEGENERATE = false;
   int WATER_BOUND = 0;
-	int len = 0;
+  int len = 0;
 
   const grd intersect = config.intersection_spacing * std::pow(config.growth_rate,seed.size);
   const int check_distance = (intersect / config.edge_length).n * 2;
@@ -442,15 +442,15 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
     if((connection->position - seed.node->position).NormDot(current_heading) > config.parrallel_thresh)
       return;
 
-	//are we too close to another existing intersection
-	if (seed.node->connected.size() == 2) {
-		auto starting_range = int_tracker.CollectRange(current, intersect);
+  //are we too close to another existing intersection
+  if (seed.node->connected.size() == 2) {
+    auto starting_range = int_tracker.CollectRange(current, intersect);
     for (auto check : starting_range) {
       if(check == seed.node) continue;
       if(check->WithinDistanceOf(*seed.node, check_distance))
         return;
     }
-	}
+  }
 
   //seed 4
   /*if (net.nodes.size() == 1012) {
@@ -460,7 +460,7 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
     return;
   }*/
 
-	while (len < config.strand_length) {
+  while (len < config.strand_length) {
     { //update our trajectory
       Pgrd adjusted_heading = net.terrain.SumPointContextAware(current, current_heading);
       const grd size = adjusted_heading.Size();
@@ -468,15 +468,15 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
       if(size > _TENSOR_THRESH_){
         DEGENERATE = false;
         const grd dot = adjusted_heading.Dot(current_heading);
-		    if (dot < 0)
-			    adjusted_heading *= -1;
+        if (dot < 0)
+          adjusted_heading *= -1;
         else if(dot <= 0) {
           //ah shit conditional case
   
           DEGENERATE = true;
         }
 
-		    adjusted_heading.Normalize();
+        adjusted_heading.Normalize();
 
         current_heading = adjusted_heading;
       }
@@ -487,8 +487,8 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
     current += current_heading * config.edge_length;
 
     //update our perpendicular and location
-		perpendicular.X = current_heading.Y;
-		perpendicular.Y = -current_heading.X;
+    perpendicular.X = current_heading.Y;
+    perpendicular.Y = -current_heading.X;
 
     if (false /*water bound*/) {
       WATER_BOUND++;
@@ -501,33 +501,33 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
       WATER_BOUND = 0;
     }
 
-		{	//will this strand respect the bounds?
-			if (current.Size() > net.radius) {
-				BOUNDED = false;
-				break;
-			}
-		}
+    {  //will this strand respect the bounds?
+      if (current.Size() > net.radius) {
+        BOUNDED = false;
+        break;
+      }
+    }
 
-		/*{	//are we close enough to another intersection to merge?
-			if (auto * branch = int_tracker.FindNearest(current, config.merge_distance); branch != nullptr) {
-				CreationNode& CompareNode = *branch;
-				if (&CompareNode != seed.node) {
-					if (len == 0) {
-						for (const auto * neighbor : CompareNode.connected) {
-							if (neighbor == seed.node) {
-								KEEP = false;
-								break;
-							}
-						}
-					}
+    /*{  //are we close enough to another intersection to merge?
+      if (auto * branch = int_tracker.FindNearest(current, config.merge_distance); branch != nullptr) {
+        CreationNode& CompareNode = *branch;
+        if (&CompareNode != seed.node) {
+          if (len == 0) {
+            for (const auto * neighbor : CompareNode.connected) {
+              if (neighbor == seed.node) {
+                KEEP = false;
+                break;
+              }
+            }
+          }
           if (WATER_BOUND || seed.node->WithinDistanceOf(CompareNode, check_distance))
             KEEP = false;
           else
-					  connect = &CompareNode;
-					break;
-				}
-			}
-		}*/
+            connect = &CompareNode;
+          break;
+        }
+      }
+    }*/
 
     auto nearby_nodes = all_tracker.CollectRange(current, intersect);
 
@@ -587,10 +587,10 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
     }
 
 
-		{	//are we crossing an edge, and should we merge
-			
-			Pgrd marker;
-			bool hit = false;
+    {  //are we crossing an edge, and should we merge
+      
+      Pgrd marker;
+      bool hit = false;
       grd best_distance = config.edge_length * 2;
 
       bool split = false;
@@ -598,17 +598,17 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
       CreationNode * split_b;
       Pgrd split_marker;
 
-			for (auto * node_entry : nearby_nodes) {
-				auto & node = *node_entry;
-				const Pgrd A_S = node.position;
+      for (auto * node_entry : nearby_nodes) {
+        auto & node = *node_entry;
+        const Pgrd A_S = node.position;
 
-				if (&node == seed.node) continue;
+        if (&node == seed.node) continue;
 
-				for (auto * edge : node.connected) { //take the closest?
+        for (auto * edge : node.connected) { //take the closest?
           if (edge == seed.node) continue;
 
-					const Pgrd A_E = edge->position;
-					if (Pgrd::getIntersect(A_S, A_E, last, current, marker)) {
+          const Pgrd A_E = edge->position;
+          if (Pgrd::getIntersect(A_S, A_E, last, current, marker)) {
             if((marker - last).Size() < best_distance){
               split = false;
               best_distance = (marker - last).Size();
@@ -617,17 +617,17 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
               else if (A_E == marker)
                 connect = edge;
               else{
-							  
+                
                 split = true;
                 split_a = &node;
                 split_b = edge;
                 split_marker = marker;
               }
-						  hit = true;
+              hit = true;
             }
-					}
-				}
-			}
+          }
+        }
+      }
 
       if (hit) {
         if (split) {
@@ -641,28 +641,28 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
 
         break;
       }
-		}
+    }
   
-		//the point has been accepted
-		suggested_spots.push_back(std::make_pair(current, current_heading));
+    //the point has been accepted
+    suggested_spots.push_back(std::make_pair(current, current_heading));
 
-		//setup for the next loop
-		last = current;
-		len++;
-	}
+    //setup for the next loop
+    last = current;
+    len++;
+  }
 
   if(WATER_BOUND) KEEP = false;
 
-	if (KEEP) {
-		int currentstep = 0;
-		int futurestep = 0;
+  if (KEEP) {
+    int currentstep = 0;
+    int futurestep = 0;
     grd current_offset = intersect * pRandom(1 - config.intersection_variance,1 + config.intersection_variance);
     grd future_offset = config.intersection_spacing * std::pow(config.growth_rate, seed.size - 1) * pRandom(1 - config.intersection_variance, 1 + config.intersection_variance);
 
-		CreationNode * last_node = seed.node;
-		for (auto point : suggested_spots) {
-			CreationNode & next_node = createNode(point.first, seed.size);
-			last_node->addConnection(next_node);
+    CreationNode * last_node = seed.node;
+    for (auto point : suggested_spots) {
+      CreationNode & next_node = createNode(point.first, seed.size);
+      last_node->addConnection(next_node);
 
       const Pgrd left_tangent(point.second.Y, -point.second.X);
       const Pgrd right_tangent(-point.second.Y, point.second.X);
@@ -671,34 +671,34 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
 
         currentstep++;
         futurestep++;
-			  if (config.edge_length * currentstep > current_offset) {
-				  create_seed(left_tangent,  next_node, CreationSeed::OriginType::Branch, false, seed.size);
-				  create_seed(right_tangent,  next_node, CreationSeed::OriginType::Branch, false, seed.size);
-				  currentstep = 0;
+        if (config.edge_length * currentstep > current_offset) {
+          create_seed(left_tangent,  next_node, CreationSeed::OriginType::Branch, false, seed.size);
+          create_seed(right_tangent,  next_node, CreationSeed::OriginType::Branch, false, seed.size);
+          currentstep = 0;
           current_offset = intersect * pRandom(1 - config.intersection_variance, 1 + config.intersection_variance);
-			  }
-			  if (seed.size > _DEBUG_MIN_SIZE_) {
-				  if (config.edge_length * futurestep > future_offset) {
-					  // if another road is to close to either of these seeds, dont add them
-					  create_seed(left_tangent, next_node, CreationSeed::OriginType::Branch, false, seed.size - 1);
-					  create_seed(right_tangent, next_node, CreationSeed::OriginType::Branch, false, seed.size - 1);
-					  futurestep = 0;
+        }
+        if (seed.size > _DEBUG_MIN_SIZE_) {
+          if (config.edge_length * futurestep > future_offset) {
+            // if another road is to close to either of these seeds, dont add them
+            create_seed(left_tangent, next_node, CreationSeed::OriginType::Branch, false, seed.size - 1);
+            create_seed(right_tangent, next_node, CreationSeed::OriginType::Branch, false, seed.size - 1);
+            futurestep = 0;
             future_offset = config.intersection_spacing * std::pow(config.growth_rate,seed.size - 1) * pRandom(1 - config.intersection_variance, 1 + config.intersection_variance);
-				  }
-			  }
+          }
+        }
       }
 
-			last_node = &next_node;
-		}
+      last_node = &next_node;
+    }
 
     //origin point intersection check
     if (seed.node->connected.size() == 3) {
       int_tracker.AddPoint(seed.node->position, seed.node);
     }
 
-		if (connect) {
+    if (connect) {
       if(connect->connected.size() == 2){
-			  int_tracker.AddPoint(connect->position, connect);
+        int_tracker.AddPoint(connect->position, connect);
         if (BOUNDED){
         
           if(DEGENERATE){
@@ -711,14 +711,14 @@ void Network::CreationWizard::SingleStream(const CreationSeed& seed) {
         
       }
       connect->addConnection(*last_node);
-		}
-		else if(BOUNDED)
-			create_seed(current_heading, *last_node, CreationSeed::OriginType::Extension, true, seed.size);
-	}
+    }
+    else if(BOUNDED)
+      create_seed(current_heading, *last_node, CreationSeed::OriginType::Extension, true, seed.size);
+  }
 }
 
 void Network::CreationWizard::generate_nodes() {
-	while (true) {
+  while (true) {
     if (!majors.empty()) {
       const CreationSeed next = majors.front();
       majors.pop_front();
@@ -733,7 +733,7 @@ void Network::CreationWizard::generate_nodes() {
     }
     else
       break;
-	}
+  }
 }
 
 //guarantees no nodes are closer than min_edge_length through merges
@@ -1177,16 +1177,16 @@ void Network::CreationWizard::generate_blocks() {
 void Network::CreationWizard::create_seed(const Pgrd& _position, const Pgrd& _heading) {
   //auto & strand = createStrand();
   const int size = _DEBUG_MAX_SIZE_;
-	auto & novel = createNode(_position, size);
+  auto & novel = createNode(_position, size);
   majors.push_front(CreationSeed(_heading, novel, CreationSeed::OriginType::None, size));
   majors.push_front(CreationSeed(_heading * -1, novel, CreationSeed::OriginType::None, size));
 }
 
 void Network::CreationWizard::create_seed(const Pgrd& _heading, CreationNode & _node, CreationSeed::OriginType _type, bool important, int _size) {
-	if(important)
-		majors.push_front(CreationSeed(_heading, _node, _type, _size));
-	else
-		frontier.push(CreationSeed(_heading, _node, _type, _size));
+  if(important)
+    majors.push_front(CreationSeed(_heading, _node, _type, _size));
+  else
+    frontier.push(CreationSeed(_heading, _node, _type, _size));
 }
 
 Network::CreationWizard::CreationNode& Network::CreationWizard::splitConnection(CreationNode& a, CreationNode& b, const Pgrd& pos) {
@@ -1225,38 +1225,38 @@ Network::Network(const grd _radius)
 : radius(_radius + 10 * 12/*config.intersection_spacing*/)
 , safe_radius(_radius)
 , terrain(0.0001) {
-	wizard = new CreationWizard(*this);
+  wizard = new CreationWizard(*this);
   wizard->create_seed(Pgrd(0, 0), Pgrd(1, 0));
 }
 
 Network::~Network() {
-	for (auto node : nodes) delete node;
-	for (auto strand : strands) delete strand;
-	for (auto intersection : intersections) delete intersection;
+  for (auto node : nodes) delete node;
+  for (auto strand : strands) delete strand;
+  for (auto intersection : intersections) delete intersection;
   for (auto block : blocks) delete block;
 
   delete wizard;
 }
 
 Network::CreationWizard::CreationNode& Network::CreationWizard::createNode(const Pgrd& _position, int _size) {
-	auto * novel = new CreationNode(_position, _size);
+  auto * novel = new CreationNode(_position, _size);
 
-	all_tracker.AddPoint(_position, novel);
-	net.nodes.push_back(novel);
-	return *novel;
+  all_tracker.AddPoint(_position, novel);
+  net.nodes.push_back(novel);
+  return *novel;
 }
 
 Network::CreationWizard::CreationStrand& Network::CreationWizard::createStrand() {
-	auto * novel = new CreationStrand();
+  auto * novel = new CreationStrand();
   net.strands.push_back(novel);
-	return *novel;
+  return *novel;
 }
 //
 Network::CreationWizard::CreationIntersection& Network::CreationWizard::createIntersection(CreationNode& _root) {
-	auto * novel = new CreationIntersection(_root);
+  auto * novel = new CreationIntersection(_root);
   net.intersections.push_back(novel);
   _root.owner = novel;
-	return *novel;
+  return *novel;
 }
 
 Network::CreationWizard::CreationBlock& Network::CreationWizard::createBlock() {
@@ -1346,12 +1346,12 @@ void Network::generate_nodes(LineBuffer* tobe) {
 
   if(tobe == nullptr) return;
 
-	for (auto * focus : nodes) {
-		for (const auto * neighbor : focus->getConnections()) {
-			if (neighbor > focus) continue;
-			tobe->push_back(std::make_pair(focus->getPosition(), neighbor->getPosition()));
-		}
-	}
+  for (auto * focus : nodes) {
+    for (const auto * neighbor : focus->getConnections()) {
+      if (neighbor > focus) continue;
+      tobe->push_back(std::make_pair(focus->getPosition(), neighbor->getPosition()));
+    }
+  }
 }
 
 void Network::clean_nodes(LineBuffer* tobe) {

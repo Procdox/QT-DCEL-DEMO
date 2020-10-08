@@ -38,12 +38,12 @@ const char * state_names[] = {
 //#define DEBUG_INTERSECTIONS
 
 class TRACER_Demo::Data : public QThread {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	virtual ~Data() override {};
-	Data(QWidget* parent)
-		: QThread(parent) {};
+  virtual ~Data() override {};
+  Data(QWidget* parent)
+    : QThread(parent) {};
 
   void doReset(){
     const grd r = 400;
@@ -235,16 +235,16 @@ private:
     processing = false;
   }
 #else
-	void run() override;
+  void run() override;
 #endif
 
 signals:
-	void linebuffer_ready(LineBuffer*, QColor);
+  void linebuffer_ready(LineBuffer*, QColor);
   void polygonbuffer_ready(PolygonBuffer*, QColor);
   void update_state(int);
-	
+  
 public:
-	bool processing = true;
+  bool processing = true;
   bool setState(States _desired, int _seed) {
     const bool reset = seed != _seed || _desired < current;
 
@@ -286,19 +286,19 @@ void TRACER_Demo::Data::run() {
 #endif
 
 TRACER_Demo::~TRACER_Demo() {
-	delete d;
+  delete d;
 }
 
 TRACER_Demo::TRACER_Demo(QWidget *parent)
-	: QMainWindow(parent)
-	, d(new Data(this))
+  : QMainWindow(parent)
+  , d(new Data(this))
 {
-	ui.setupUi(this);
+  ui.setupUi(this);
 
-	ui_render = findChild<RenderArea *>(QString("renderWidget"));
+  ui_render = findChild<RenderArea *>(QString("renderWidget"));
 
-	ui_seed = findChild<QSpinBox *>(QString("ui_seed"));
-	ui_start = findChild<QPushButton *>(QString("ui_start"));
+  ui_seed = findChild<QSpinBox *>(QString("ui_seed"));
+  ui_start = findChild<QPushButton *>(QString("ui_start"));
   ui_state = findChild<QComboBox *>(QString("ui_state"));
   ui_label = findChild<QLabel *>(QString("ui_current"));
 
@@ -306,16 +306,16 @@ TRACER_Demo::TRACER_Demo(QWidget *parent)
   for (States s = Reset; s < Finished; ++s)
     ui_state->addItem(QString(state_names[s]));
 
-	bool res = true;
+  bool res = true;
   
   connect(d, &Data::linebuffer_ready, this, &TRACER_Demo::render_linebuffer);
-	connect(d, &Data::polygonbuffer_ready, this, &TRACER_Demo::render_polygonbuffer);
+  connect(d, &Data::polygonbuffer_ready, this, &TRACER_Demo::render_polygonbuffer);
   connect(d, &Data::update_state, this, &TRACER_Demo::update_state);
-	res &= !!connect(ui_start, &QPushButton::pressed, this, &TRACER_Demo::start);
+  res &= !!connect(ui_start, &QPushButton::pressed, this, &TRACER_Demo::start);
 
-	Q_ASSERT(res);
+  Q_ASSERT(res);
 
-	d->processing = false;
+  d->processing = false;
 }
 
 void TRACER_Demo::start()
@@ -332,8 +332,8 @@ void TRACER_Demo::start()
 
 void TRACER_Demo::render_linebuffer(LineBuffer * packet, QColor c)
 {
-	ui_render->addLineBuffer(*packet, c);
-	delete packet;
+  ui_render->addLineBuffer(*packet, c);
+  delete packet;
 }
 
 void TRACER_Demo::render_polygonbuffer(PolygonBuffer * packet, QColor c)

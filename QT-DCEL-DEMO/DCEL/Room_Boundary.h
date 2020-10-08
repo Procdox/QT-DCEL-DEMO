@@ -4,11 +4,11 @@
 
 struct Room_Boundary
 {
-	Room_Boundary(Face * reference);
+  Room_Boundary(Face * reference);
 
-	bool walled;
-	std::list<Pgrd> Points;
-	std::list<Pgrd> Offsets;
+  bool walled;
+  std::list<Pgrd> Points;
+  std::list<Pgrd> Offsets;
 
-	std::list<Pgrd> Inset(grd const distance) const;
+  std::list<Pgrd> Inset(grd const distance) const;
 };
