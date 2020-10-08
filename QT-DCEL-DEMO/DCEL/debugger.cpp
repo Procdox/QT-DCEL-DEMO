@@ -24,3 +24,7 @@ void debug_proxy(const char * what, int input) {
 void debug_proxy(const char * what, double x, double y) {
 	qDebug() << x << "," << y;
 }
+
+void debug_proxy(double x, double y) {
+  qDebug().nospace() << qSetRealNumberPrecision(10) << x << "," << y;
+}
